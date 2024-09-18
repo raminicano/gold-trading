@@ -2,6 +2,9 @@
 auth-server/dist
 auth-server/node_modules
 auth-server/build
+resource-server/node_modules
+resource-server/dist
+resource-server/build
 
 # Logs
 auth-server/logs
@@ -41,6 +44,7 @@ auth-server/.env.development.local
 auth-server/.env.test.local
 auth-server/.env.production.local
 auth-server/.env.local
+resource-server/.env
 
 # temp directory
 .temp
