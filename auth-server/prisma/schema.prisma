@@ -1,0 +1,29 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql" // MariaDB는 MySQL 프로토콜을 사용하므로 provider는 "mysql"
+  url      = env("DATABASE_URL") // .env 파일에 있는 DATABASE_URL 사용
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
+  password  String
+  role      String
+  createdAt DateTime @default(now())
+  tokens    Token[] // 1:N 관계 (유저는 여러 토큰을 가질 수 있음)
+}
+
+model Token {
+  id           Int      @id @default(autoincrement())
+  userId       Int
+  refreshToken String
+  createdAt    DateTime @default(now())
+  expiresAt    DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade) // 관계 설정과 함께 onDelete 옵션 설정
+
+  @@index([userId])
+}
