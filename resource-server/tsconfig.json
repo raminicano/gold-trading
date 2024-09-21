@@ -17,5 +17,7 @@
     "strictBindCallApply": false,
     "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false
-  }
+  },
+  "include": ["src/**/*.ts"],  // resource-server/src 디렉토리 아래의 파일만 포함
+  "exclude": ["node_modules", "dist"]
 }

@@ -2,6 +2,8 @@ import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthGrpcService } from '../../auth/grpc/auth-grpc.service';
 import { CreateUserDto } from '../dto/createUser.dto';
+import { Observable, lastValueFrom } from 'rxjs'; // Observable을 Promise로 변환하는 함수
+
 
 @Injectable()
 export class UserService {
@@ -48,6 +50,9 @@ export class UserService {
       password,
     );
 
+    const response: any = await lastValueFrom(grpcResponse);
+
+    console.log(grpcResponse);
     // 4. 자원 서버에 사용자 정보 저장 (userId와 username만 저장)
     await this.prisma.user.create({
       data: {

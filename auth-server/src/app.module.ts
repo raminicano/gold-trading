@@ -6,6 +6,9 @@ import { ConfigModule } from '@nestjs/config';
 import { PrismaService } from './prisma/prisma.service';
 import { UserService } from './users/services/user.service';
 import databaseConfig from './config/database.config';
+import { AuthService } from 'auth/services/auth.service';
+import { JwtService } from '@nestjs/jwt';
+import { AuthGrpcController } from './auth/grpc/auth-grpc.controller';
 
 @Module({
   imports: [
@@ -14,7 +17,7 @@ import databaseConfig from './config/database.config';
     }),
     AuthModule,
   ],
-  controllers: [AppController],
-  providers: [AppService, PrismaService, UserService],
+  controllers: [AppController, AuthGrpcController],
+  providers: [AppService, PrismaService, UserService, AuthService, JwtService],
 })
 export class AppModule {}

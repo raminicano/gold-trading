@@ -8,6 +8,7 @@ import { AuthGrpcService } from './auth/grpc/auth-grpc.service'; // gRPC 서비�
 import { UserService } from './users/services/user.service';
 import { UserController } from './users/controllers/user.controller';
 import { join } from 'path';
+import { PrismaService } from './prisma/prisma.service';
 
 @Module({
   imports: [
@@ -16,17 +17,17 @@ import { join } from 'path';
     }),
     ClientsModule.register([
       {
-        name: 'auth', // 이 이름으로 DI에서 사용됨
+        name: 'AUTH_PACKAGE', // 이 이름으로 DI에서 사용됨
         transport: Transport.GRPC,
         options: {
-          package: '', // auth.proto에 정의된 package 이름 (없을 경우 빈 문자열)
-          protoPath: join(__dirname, '../../grpc/auth.proto'), // 인증 서버의 proto 파일 경로
+          package: 'auth', // auth.proto에 정의된 package 이름 (없을 경우 빈 문자열)
+          protoPath: join(__dirname, '../../../grpc/auth.proto'), // 인증 서버의 proto 파일 경로
           url: '0.0.0.0:50051', // 인증 서버의 gRPC 주소
         },
       },
     ]),
   ],
   controllers: [AppController, UserController],
-  providers: [AppService, AuthGrpcService, UserService],
+  providers: [AppService, AuthGrpcService, UserService, PrismaService],
 })
 export class AppModule {}
