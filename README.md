@@ -16,7 +16,7 @@ auth-server/
 │   ├── auth/
 │   │   ├── grpc/
 │   │   │   └── auth.proto              # gRPC 프로토콜 정의 파일 (자원 서버와 통신)
-│   │   │   └── auth-grpc.service.ts    # gRPC 서비스 구현 (자원 서버에서 요청 처리)
+│   │   │   └── auth-grpc.controller.ts # gRPC 컨트롤러 구현 (자원 서버에서 요청 처리)
 │   │   ├── services/
 │   │   │   └── auth.service.ts         # 토큰 생성, 인증 로직
 │   │   ├── guards/
