@@ -2,10 +2,10 @@ import { Controller } from '@nestjs/common';
 import { GrpcMethod } from '@nestjs/microservices';
 import { AuthService } from '../services/auth.service';
 import {
-  TokenRequest,
-  TokenResponse,
   CreateUserRequest,
   UserResponse,
+  LoginUserRequest,
+  LoginUserResponse,
 } from '../../../generated/auth';
 import { UserService } from '../../users/services/user.service';
 
@@ -17,16 +17,6 @@ export class AuthGrpcController {
     private readonly authService: AuthService,
     private readonly userService: UserService,
   ) {}
-
-  // gRPC에서 ValidateToken 메서드 처리
-  @GrpcMethod('AuthService', 'ValidateToken')
-  async validateToken(data: TokenRequest): Promise<TokenResponse> {
-    const isValid = await this.authService.verifyToken(data.accessToken);
-    const userId = isValid
-      ? await this.authService.getUserIdFromToken(data.accessToken)
-      : null;
-    return { isValid, userId };
-  }
 
   // gRPC에서 RegisterUser 메서드 처리
   @GrpcMethod('AuthService', 'RegisterUser')
@@ -40,5 +30,15 @@ export class AuthGrpcController {
       username: user.username,
       role: user.role,
     };
+  }
+
+  // gRPC에서 LoginUser 메서드 처리
+  @GrpcMethod('AuthService', 'LoginUser')
+  async login(data: LoginUserRequest): Promise<LoginUserResponse> {
+    const { username, password } = data;
+    console.log('gRPC 로그인 요청 감지:', username);
+
+    const tokens = await this.authService.login(username, password);
+    return tokens;
   }
 }

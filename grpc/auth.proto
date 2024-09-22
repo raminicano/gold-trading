@@ -6,6 +6,7 @@ package auth;  // 패키지 이름을 지정
 service AuthService {
   rpc ValidateToken (TokenRequest) returns (TokenResponse);
   rpc RegisterUser (CreateUserRequest) returns (UserResponse);
+  rpc LoginUser (LoginUserRequest) returns (LoginUserResponse);
 }
 
 message TokenRequest {
@@ -26,4 +27,15 @@ message UserResponse {
   uint32 id = 1;
   string username = 2;
   string role = 3;
+}
+
+message LoginUserRequest {
+  string username = 1;
+  string password = 2;
+}
+
+message LoginUserResponse {
+  bool isValid = 1;
+  string accessToken = 2;
+  string refreshToken = 3;
 }
