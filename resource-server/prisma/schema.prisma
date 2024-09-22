@@ -1,0 +1,81 @@
+// prisma/schema.prisma
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "mysql" // MariaDB는 MySQL 프로토콜 사용
+    url      = env("DATABASE_URL") // .env 파일에 DB URL 설정
+}
+
+model User {
+    userId     Int         @id @default(autoincrement())
+    username   String      @unique
+    buyOrders  BuyOrder[]
+    sellOrders SellOrder[]
+    prices     Price[]
+
+    @@map("user") // 테이블 이름을 명시적으로 지정 (user 테이블과 매핑)
+}
+
+model Item {
+    itemId     Int         @id @default(autoincrement())
+    name       String      @unique
+    buyOrders  BuyOrder[]
+    sellOrders SellOrder[]
+    prices     Price[]
+
+    @@map("item") // item 테이블과 매핑
+}
+
+model BuyOrder {
+    id              Int       @id @default(autoincrement())
+    orderId         String // 사람에게 읽기 쉬운 주문 번호 (예: "ORDER-001322")
+    userId          Int
+    status          String // 주문 상태 (예: "주문 완료", "입금 완료", "발송 완료")
+    itemId          Int
+    quantity        Decimal   @db.Decimal(10, 2) // 소수점 2자리까지의 수량
+    price           Int // price 테이블에서 가져온 가격
+    amount          Decimal   @db.Decimal(10, 2)
+    orderDate       DateTime  @default(now()) // 현재 시간
+    deliveryAddress String
+    deletedAt       DateTime? // 소프트 삭제 (nullable)
+
+    user User @relation(fields: [userId], references: [userId])
+    item Item @relation(fields: [itemId], references: [itemId])
+
+    @@map("buy_order") // buy_order 테이블과 매핑
+}
+
+model SellOrder {
+    id              Int       @id @default(autoincrement())
+    orderId         String // 사람에게 읽기 쉬운 주문 번호 (예: "ORDER-001322")
+    userId          Int
+    status          String // 주문 상태 (예: "주문 완료", "송금 완료", "수령 완료")
+    itemId          Int
+    quantity        Decimal   @db.Decimal(10, 2)
+    price           Int // price 테이블에서 가져온 가격
+    amount          Decimal   @db.Decimal(10, 2)
+    orderDate       DateTime  @default(now()) // 현재 시간
+    deliveryAddress String
+    deletedAt       DateTime? // 소프트 삭제 (nullable)
+
+    user User @relation(fields: [userId], references: [userId])
+    item Item @relation(fields: [itemId], references: [itemId])
+
+    @@map("sell_order") // sell_order 테이블과 매핑
+}
+
+model Price {
+    priceId   Int      @id @default(autoincrement())
+    itemId    Int
+    price     Int // 가격
+    changedBy Int // 가격 변경을 한 사용자
+    createdAt DateTime @default(now()) // 가격 변경 시각
+
+    item Item @relation(fields: [itemId], references: [itemId])
+    user User @relation(fields: [changedBy], references: [userId])
+
+    @@map("price") // price 테이블과 매핑
+}
