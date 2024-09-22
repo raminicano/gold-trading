@@ -31,7 +31,6 @@ export class AuthGrpcController {
   // gRPC에서 RegisterUser 메서드 처리
   @GrpcMethod('AuthService', 'RegisterUser')
   async registerUser(data: CreateUserRequest): Promise<UserResponse> {
-    console.log('gRPC 호출이 감지되었습니다:', data);
     const user = await this.userService.createUser(
       data.username,
       data.password,

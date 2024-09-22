@@ -15,7 +15,6 @@ auth-server/
 ├── src/
 │   ├── auth/
 │   │   ├── grpc/
-│   │   │   └── auth.proto              # gRPC 프로토콜 정의 파일 (자원 서버와 통신)
 │   │   │   └── auth-grpc.controller.ts # gRPC 컨트롤러 구현 (자원 서버에서 요청 처리)
 │   │   ├── services/
 │   │   │   └── auth.service.ts         # 토큰 생성, 인증 로직
@@ -29,7 +28,6 @@ auth-server/
 │   │   └── log.constants.ts            # 로그 관련 상수 및 설정
 │   ├── config/                         # 환경 설정
 │   │   ├── database.config.ts          # MariaDB 및 데이터베이스 설정
-│   │   ├── grpc.config.ts              # gRPC 관련 설정
 │   │   ├── elastic.config.ts           # Elastic Stack 설정
 │   │   └── app.config.ts               # 애플리케이션 기본 설정
 │   ├── metric/
@@ -52,6 +50,8 @@ auth-server/
 resource-server/
 ├── prisma/
 │       └── schema.prisma               # prisma 스키마 정의
+├── generated/                          # proto파일 컴파일을 통해 나온 stub
+|       └── auth.ts
 ├── src/
 │   ├── orders/
 │   │   ├── controllers/

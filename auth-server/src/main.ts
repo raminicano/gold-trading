@@ -19,9 +19,9 @@ async function bootstrap() {
       transport: Transport.GRPC,
       options: {
         package: 'auth',
-        protoPath: join(__dirname, '../../node_modules/proto/auth.proto'),
+        protoPath: join(__dirname, '../../../grpc/auth.proto'),
         loader: {
-          includeDirs: [join(__dirname, '../../../node_modules/proto')],
+          includeDirs: [join(__dirname, '../../../grpc/proto')],
         },
         url: 'localhost:50051',
       },
@@ -29,5 +29,4 @@ async function bootstrap() {
   );
   await app.listen();
 }
-
 bootstrap();
