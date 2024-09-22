@@ -1,11 +1,17 @@
 import { Injectable, Inject, OnModuleInit } from '@nestjs/common';
 import { ClientGrpc } from '@nestjs/microservices';
 import { Observable, lastValueFrom } from 'rxjs'; // Observable을 Promise로 변환하는 함수
-import { CreateUserRequest, UserResponse } from '../../../generated/auth'; // gRPC에서 생성된 타입
+import {
+  CreateUserRequest,
+  UserResponse,
+  LoginUserRequest,
+  LoginUserResponse,
+} from '../../../generated/auth'; // gRPC에서 생성된 타입
 
 // 새로운 인터페이스 정의 (기존 gRPC AuthService를 래핑)
 interface AuthServiceWrapper {
   RegisterUser(request: CreateUserRequest): Observable<UserResponse>;
+  LoginUser(request: LoginUserRequest): Observable<LoginUserResponse>;
 }
 
 @Injectable()
@@ -37,5 +43,18 @@ export class AuthGrpcService implements OnModuleInit {
     const response: UserResponse = await lastValueFrom(observableResponse);
 
     return response; // gRPC 응답 반환
+  }
+
+  // gRPC 클라이언트를 통해 로그인 요청
+  async loginUser(
+    username: string,
+    password: string,
+  ): Promise<LoginUserResponse> {
+    const request: LoginUserRequest = { username, password };
+    console.log('Sending gRPC request to AuthService:', request);
+    // gRPC 호출
+    const observableResponse: Observable<LoginUserResponse> =
+      this.authService.LoginUser(request);
+    return await lastValueFrom(observableResponse); // Observable을 Promise로 변환 후 반환
   }
 }

@@ -2,6 +2,7 @@ import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { AuthGrpcService } from '../../auth/grpc/auth-grpc.service';
 import { CreateUserDto } from '../dto/createUser.dto';
+import { LoginDto } from 'users/dto/loginUser.dto';
 
 @Injectable()
 export class UserService {
@@ -57,5 +58,39 @@ export class UserService {
     });
 
     return { statusCode: HttpStatus.CREATED }; // 201
+  }
+
+  // 로그인 처리
+  async loginUser(loginDto: LoginDto) {
+    const { username, password } = loginDto;
+
+    // 1. 유저가 없는 경우 (자원서버의 User 테이블 조회)
+    const user = await this.prisma.user.findUnique({
+      where: { username },
+    });
+
+    if (!user) {
+      throw new HttpException('User not found', HttpStatus.NOT_FOUND); // 404
+    }
+
+    // 2. gRPC 클라이언트를 통해 인증 서버에 로그인 요청
+    const grpcResponse = await this.authGrpcService.loginUser(
+      username,
+      password,
+    );
+
+    // 3. isValid 값으로 유효성 검증
+    if (!grpcResponse.isValid) {
+      throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED); // 401
+    }
+
+    return {
+      success: true,
+      message: 'User login successfully',
+      data: {
+        accessToken: grpcResponse.accessToken,
+        refreshToken: grpcResponse.refreshToken,
+      },
+    };
   }
 }

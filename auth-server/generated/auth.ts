@@ -29,6 +29,17 @@ export interface UserResponse {
   role: string;
 }
 
+export interface LoginUserRequest {
+  username: string;
+  password: string;
+}
+
+export interface LoginUserResponse {
+  isValid: boolean;
+  accessToken: string;
+  refreshToken: string;
+}
+
 function createBaseTokenRequest(): TokenRequest {
   return { accessToken: "" };
 }
@@ -323,9 +334,173 @@ export const UserResponse: MessageFns<UserResponse> = {
   },
 };
 
+function createBaseLoginUserRequest(): LoginUserRequest {
+  return { username: "", password: "" };
+}
+
+export const LoginUserRequest: MessageFns<LoginUserRequest> = {
+  encode(message: LoginUserRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.username !== "") {
+      writer.uint32(10).string(message.username);
+    }
+    if (message.password !== "") {
+      writer.uint32(18).string(message.password);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): LoginUserRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseLoginUserRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          if (tag !== 10) {
+            break;
+          }
+
+          message.username = reader.string();
+          continue;
+        case 2:
+          if (tag !== 18) {
+            break;
+          }
+
+          message.password = reader.string();
+          continue;
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): LoginUserRequest {
+    return {
+      username: isSet(object.username) ? globalThis.String(object.username) : "",
+      password: isSet(object.password) ? globalThis.String(object.password) : "",
+    };
+  },
+
+  toJSON(message: LoginUserRequest): unknown {
+    const obj: any = {};
+    if (message.username !== "") {
+      obj.username = message.username;
+    }
+    if (message.password !== "") {
+      obj.password = message.password;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<LoginUserRequest>, I>>(base?: I): LoginUserRequest {
+    return LoginUserRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<LoginUserRequest>, I>>(object: I): LoginUserRequest {
+    const message = createBaseLoginUserRequest();
+    message.username = object.username ?? "";
+    message.password = object.password ?? "";
+    return message;
+  },
+};
+
+function createBaseLoginUserResponse(): LoginUserResponse {
+  return { isValid: false, accessToken: "", refreshToken: "" };
+}
+
+export const LoginUserResponse: MessageFns<LoginUserResponse> = {
+  encode(message: LoginUserResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.isValid !== false) {
+      writer.uint32(8).bool(message.isValid);
+    }
+    if (message.accessToken !== "") {
+      writer.uint32(18).string(message.accessToken);
+    }
+    if (message.refreshToken !== "") {
+      writer.uint32(26).string(message.refreshToken);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): LoginUserResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseLoginUserResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          if (tag !== 8) {
+            break;
+          }
+
+          message.isValid = reader.bool();
+          continue;
+        case 2:
+          if (tag !== 18) {
+            break;
+          }
+
+          message.accessToken = reader.string();
+          continue;
+        case 3:
+          if (tag !== 26) {
+            break;
+          }
+
+          message.refreshToken = reader.string();
+          continue;
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): LoginUserResponse {
+    return {
+      isValid: isSet(object.isValid) ? globalThis.Boolean(object.isValid) : false,
+      accessToken: isSet(object.accessToken) ? globalThis.String(object.accessToken) : "",
+      refreshToken: isSet(object.refreshToken) ? globalThis.String(object.refreshToken) : "",
+    };
+  },
+
+  toJSON(message: LoginUserResponse): unknown {
+    const obj: any = {};
+    if (message.isValid !== false) {
+      obj.isValid = message.isValid;
+    }
+    if (message.accessToken !== "") {
+      obj.accessToken = message.accessToken;
+    }
+    if (message.refreshToken !== "") {
+      obj.refreshToken = message.refreshToken;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<LoginUserResponse>, I>>(base?: I): LoginUserResponse {
+    return LoginUserResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<LoginUserResponse>, I>>(object: I): LoginUserResponse {
+    const message = createBaseLoginUserResponse();
+    message.isValid = object.isValid ?? false;
+    message.accessToken = object.accessToken ?? "";
+    message.refreshToken = object.refreshToken ?? "";
+    return message;
+  },
+};
+
 export interface AuthService {
   ValidateToken(request: TokenRequest): Promise<TokenResponse>;
   RegisterUser(request: CreateUserRequest): Promise<UserResponse>;
+  LoginUser(request: LoginUserRequest): Promise<LoginUserResponse>;
 }
 
 export const AuthServiceServiceName = "auth.AuthService";
@@ -337,6 +512,7 @@ export class AuthServiceClientImpl implements AuthService {
     this.rpc = rpc;
     this.ValidateToken = this.ValidateToken.bind(this);
     this.RegisterUser = this.RegisterUser.bind(this);
+    this.LoginUser = this.LoginUser.bind(this);
   }
   ValidateToken(request: TokenRequest): Promise<TokenResponse> {
     const data = TokenRequest.encode(request).finish();
@@ -348,6 +524,12 @@ export class AuthServiceClientImpl implements AuthService {
     const data = CreateUserRequest.encode(request).finish();
     const promise = this.rpc.request(this.service, "RegisterUser", data);
     return promise.then((data) => UserResponse.decode(new BinaryReader(data)));
+  }
+
+  LoginUser(request: LoginUserRequest): Promise<LoginUserResponse> {
+    const data = LoginUserRequest.encode(request).finish();
+    const promise = this.rpc.request(this.service, "LoginUser", data);
+    return promise.then((data) => LoginUserResponse.decode(new BinaryReader(data)));
   }
 }
 
