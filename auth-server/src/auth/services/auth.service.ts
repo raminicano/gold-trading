@@ -6,12 +6,14 @@ import * as jwt from 'jsonwebtoken';
 import * as bcrypt from 'bcrypt';
 import { JwtAuthGuard } from 'auth/guards/jwt.guard';
 import { Token } from '@prisma/client';
+import { UserService } from 'users/services/user.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtGuard: JwtAuthGuard,
+    private readonly userService: UserService,
   ) {}
 
   // JWT 토큰 생성 함수
@@ -65,7 +67,7 @@ export class AuthService {
     username: string,
     password: string,
   ): Promise<{ isValid: boolean; accessToken: string; refreshToken: string }> {
-    const user = await this.prisma.user.findUnique({ where: { username } });
+    const user = await this.userService.findUserByUsername(username);
 
     if (!user || !(await bcrypt.compare(password, user.password))) {
       const isValid = false;
@@ -137,5 +139,25 @@ export class AuthService {
     isValid = true;
 
     return { isValid, userId };
+  }
+
+  // 패스워드 수정 로직
+  async modifyPassword(
+    accessToken: string,
+    password: string,
+  ): Promise<{ isValid: boolean; status: number }> {
+    // 1. 액세스토큰을 통해 사용자 정보 추출 (유효성 검증 포함)
+    const userId = this.jwtGuard.verifyToken(accessToken);
+    let isValid = false;
+
+    if (!userId) {
+      return { isValid, status: 401 };
+    }
+
+    // 2. 사용자 id로 유저테이블에서 비밀번호 업데이트
+    await this.userService.changePassword(userId, password);
+    isValid = true;
+
+    return { isValid, status: 204 };
   }
 }

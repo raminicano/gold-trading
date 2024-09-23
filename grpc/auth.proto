@@ -9,6 +9,7 @@ service AuthService {
   rpc LoginUser (LoginUserRequest) returns (LoginUserResponse);
   rpc RefreshAccessToken (RefreshTokenRequest) returns (RefreshTokenResponse);
   rpc LogoutUser (TokenRequest) returns (TokenResponse);
+  rpc ModifyPassword (ModifyPasswordRequest) returns (ModifyPasswordResponse);
 }
 
 message TokenRequest {
@@ -49,4 +50,14 @@ message RefreshTokenRequest {
 message RefreshTokenResponse {
   bool isValid = 1;
   string accessToken = 2;
+}
+
+message ModifyPasswordRequest {
+  string accessToken = 1;
+  string password = 2;
+}
+
+message ModifyPasswordResponse {
+  bool isValid = 1;
+  int32 status = 2;
 }

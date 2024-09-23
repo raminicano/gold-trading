@@ -10,6 +10,8 @@ import {
   RefreshTokenResponse,
   TokenRequest,
   TokenResponse,
+  ModifyPasswordRequest,
+  ModifyPasswordResponse,
 } from '../../../generated/auth';
 import { UserService } from '../../users/services/user.service';
 
@@ -59,6 +61,19 @@ export class AuthGrpcController {
   async logoutUser(data: TokenRequest): Promise<TokenResponse> {
     const { accessToken } = data;
     const response = await this.authService.logout(accessToken);
+    return response;
+  }
+
+  // gRPC에서 modifyPassword 메서드 처리
+  @GrpcMethod('AuthService', 'ModifyPassword')
+  async modifyPassword(
+    data: ModifyPasswordRequest,
+  ): Promise<ModifyPasswordResponse> {
+    const { accessToken, password } = data;
+    const response = await this.authService.modifyPassword(
+      accessToken,
+      password,
+    );
     return response;
   }
 }

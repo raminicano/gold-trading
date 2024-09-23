@@ -4,6 +4,7 @@ import {
   Post,
   Req,
   BadRequestException,
+  Patch,
 } from '@nestjs/common';
 import { UserService } from '../services/user.service';
 import { CreateUserDto } from '../dto/createUser.dto';
@@ -17,6 +18,7 @@ import {
 import { LoginDto } from '../dto/loginUser.dto';
 import { ReaccessDto } from '../dto/reaccess.dto';
 import { Request } from 'express';
+import { UpdateUserDto } from 'users/dto/updateUser.dto';
 
 @ApiTags('users')
 @Controller('users')
@@ -81,7 +83,47 @@ export class UserController {
       throw new BadRequestException('유효한 Access Token이 아닙니다.');
     }
 
-    // 2. AuthService에서 로그아웃 로직 수행
+    // 2. userservice에서 로그아웃 로직 수행
     return await this.userService.logout(token);
+  }
+
+  // 비밀번호 재발급 API
+  @ApiOperation({ summary: '비밀번호 재발급' })
+  @ApiBearerAuth() // Swagger에서 Authorization 헤더 사용 설정
+  @ApiHeader({
+    name: 'authorization',
+    description: 'Bearer access token',
+  })
+  @ApiResponse({ status: 204, description: '비밀번호 업데이트 성공' })
+  @ApiResponse({ status: 401, description: '유효하지 않은 Access Token' })
+  @ApiResponse({ status: 400, description: '잘못된 요청 형식' })
+  @Patch('modify')
+  async modifyPassword(
+    @Req() request: Request,
+    @Body() modifyPasswordDto: UpdateUserDto, // 요청 바디에서 비밀번호 수신
+  ) {
+    // 1. Request 객체에서 Authorization 헤더 추출
+    const authorizationHeader = request.headers['authorization'];
+    console.log(authorizationHeader);
+
+    if (!authorizationHeader) {
+      throw new BadRequestException('Access Token이 누락되었습니다.');
+    }
+
+    const token = authorizationHeader.split(' ')[1]; // Bearer {token}에서 {token}만 추출
+
+    if (!token) {
+      throw new BadRequestException('유효한 Access Token이 아닙니다.');
+    }
+
+    // 2. AuthService에서 비밀번호 업데이트 로직 수행
+    const { password } = modifyPasswordDto; // 요청 바디에서 비밀번호 추출
+
+    if (!password) {
+      throw new BadRequestException('비밀번호가 누락되었습니다.');
+    }
+
+    // UserService에 token과 password 전달하여 비밀번호 변경 로직 수행
+    return await this.userService.modifyPassword(token, password);
   }
 }
