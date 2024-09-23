@@ -8,6 +8,8 @@ import {
   LoginUserResponse,
   RefreshTokenRequest,
   RefreshTokenResponse,
+  TokenRequest,
+  TokenResponse,
 } from '../../../generated/auth'; // gRPC에서 생성된 타입
 
 // 새로운 인터페이스 정의 (기존 gRPC AuthService를 래핑)
@@ -17,6 +19,7 @@ interface AuthServiceWrapper {
   RefreshAccessToken(
     request: RefreshTokenRequest,
   ): Observable<RefreshTokenResponse>;
+  LogoutUser(request: TokenRequest): Observable<TokenResponse>;
 }
 
 @Injectable()
@@ -67,6 +70,13 @@ export class AuthGrpcService implements OnModuleInit {
     const request: RefreshTokenRequest = { refreshToken };
     const observableResponse: Observable<RefreshTokenResponse> =
       this.authService.RefreshAccessToken(request);
+    return await lastValueFrom(observableResponse);
+  }
+
+  async logoutUser(accessToken: string): Promise<TokenResponse> {
+    const request: TokenRequest = { accessToken };
+    const observableResponse: Observable<TokenResponse> =
+      this.authService.LogoutUser(request);
     return await lastValueFrom(observableResponse);
   }
 }

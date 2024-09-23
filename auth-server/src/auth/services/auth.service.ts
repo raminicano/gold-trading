@@ -25,19 +25,37 @@ export class AuthService {
 
   // refreshToken 생성 및 저장 함수
   async generateAndStoreRefreshToken(userId: number): Promise<string> {
+    // 1. 토큰 재생성
     const refreshToken = jwt.sign({ userId }, process.env.JWT_SECRET, {
       expiresIn: '7d',
     }); // 7일 동안 유효
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7); // 유효기간 7일 설정
 
-    await this.prisma.token.create({
-      data: {
-        userId,
-        refreshToken,
-        expiresAt,
-      },
+    // 2. userId로 토큰이 있는지 확인
+    const existingToken = await this.prisma.token.findFirst({
+      where: { userId },
     });
+
+    if (existingToken) {
+      // 3. 기존 토큰이 있으면 업데이트
+      await this.prisma.token.updateMany({
+        where: { userId }, // userId로 업데이트
+        data: {
+          refreshToken,
+          expiresAt,
+        },
+      });
+    } else {
+      // 4. 기존 토큰이 없으면 새로 생성
+      await this.prisma.token.create({
+        data: {
+          userId,
+          refreshToken,
+          expiresAt,
+        },
+      });
+    }
 
     return refreshToken;
   }
@@ -96,5 +114,28 @@ export class AuthService {
     isValid = true;
     accessToken = newAccessToekn;
     return { isValid, accessToken };
+  }
+
+  // 로그아웃 로직
+  async logout(
+    accessToken: string,
+  ): Promise<{ isValid: boolean; userId: string }> {
+    // 1. 액세스토큰을 통해 사용자 정보 추출 (유효성 검증 포함)
+    const userId = this.jwtGuard.verifyToken(accessToken);
+    let isValid = false;
+
+    if (!userId) {
+      return { isValid, userId: '' };
+    }
+
+    // 2. 사용자 id로 토큰테이블에서 refreshToken을 업데이트
+    await this.prisma.token.updateMany({
+      where: { userId: userId },
+      data: { refreshToken: '' },
+    });
+
+    isValid = true;
+
+    return { isValid, userId };
   }
 }

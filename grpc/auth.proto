@@ -8,6 +8,7 @@ service AuthService {
   rpc RegisterUser (CreateUserRequest) returns (UserResponse);
   rpc LoginUser (LoginUserRequest) returns (LoginUserResponse);
   rpc RefreshAccessToken (RefreshTokenRequest) returns (RefreshTokenResponse);
+  rpc LogoutUser (TokenRequest) returns (TokenResponse);
 }
 
 message TokenRequest {

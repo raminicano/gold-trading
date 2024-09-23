@@ -1,9 +1,22 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Post,
+  Req,
+  BadRequestException,
+} from '@nestjs/common';
 import { UserService } from '../services/user.service';
 import { CreateUserDto } from '../dto/createUser.dto';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+  ApiBearerAuth,
+  ApiHeader,
+} from '@nestjs/swagger';
 import { LoginDto } from '../dto/loginUser.dto';
 import { ReaccessDto } from '../dto/reaccess.dto';
+import { Request } from 'express';
 
 @ApiTags('users')
 @Controller('users')
@@ -40,5 +53,35 @@ export class UserController {
   @Post('refresh')
   async refreshAccessToken(@Body() reaccessDto: ReaccessDto) {
     return this.userService.refreshToken(reaccessDto);
+  }
+
+  // 로그아웃 API
+  @ApiOperation({ summary: '사용자 로그아웃' })
+  @ApiBearerAuth() // Swagger에서 Authorization 헤더 사용 설정
+  @ApiHeader({
+    name: 'authorization',
+    description: 'Bearer access token',
+  })
+  @ApiResponse({ status: 200, description: '로그아웃 성공' })
+  @ApiResponse({ status: 401, description: '유효하지 않은 Access Token' })
+  @ApiResponse({ status: 400, description: '잘못된 요청 형식' })
+  @Post('logout')
+  async logout(@Req() request: Request) {
+    // 1. Request 객체에서 Authorization 헤더 추출
+    const authorizationHeader = request.headers['authorization'];
+    console.log(authorizationHeader);
+
+    if (!authorizationHeader) {
+      throw new BadRequestException('Access Token이 누락되었습니다.');
+    }
+
+    const token = authorizationHeader.split(' ')[1]; // Bearer {token}에서 {token}만 추출
+
+    if (!token) {
+      throw new BadRequestException('유효한 Access Token이 아닙니다.');
+    }
+
+    // 2. AuthService에서 로그아웃 로직 수행
+    return await this.userService.logout(token);
   }
 }
