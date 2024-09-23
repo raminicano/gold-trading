@@ -40,6 +40,15 @@ export interface LoginUserResponse {
   refreshToken: string;
 }
 
+export interface RefreshTokenRequest {
+  refreshToken: string;
+}
+
+export interface RefreshTokenResponse {
+  isValid: boolean;
+  accessToken: string;
+}
+
 function createBaseTokenRequest(): TokenRequest {
   return { accessToken: "" };
 }
@@ -497,10 +506,142 @@ export const LoginUserResponse: MessageFns<LoginUserResponse> = {
   },
 };
 
+function createBaseRefreshTokenRequest(): RefreshTokenRequest {
+  return { refreshToken: "" };
+}
+
+export const RefreshTokenRequest: MessageFns<RefreshTokenRequest> = {
+  encode(message: RefreshTokenRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.refreshToken !== "") {
+      writer.uint32(10).string(message.refreshToken);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): RefreshTokenRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseRefreshTokenRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          if (tag !== 10) {
+            break;
+          }
+
+          message.refreshToken = reader.string();
+          continue;
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): RefreshTokenRequest {
+    return { refreshToken: isSet(object.refreshToken) ? globalThis.String(object.refreshToken) : "" };
+  },
+
+  toJSON(message: RefreshTokenRequest): unknown {
+    const obj: any = {};
+    if (message.refreshToken !== "") {
+      obj.refreshToken = message.refreshToken;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<RefreshTokenRequest>, I>>(base?: I): RefreshTokenRequest {
+    return RefreshTokenRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<RefreshTokenRequest>, I>>(object: I): RefreshTokenRequest {
+    const message = createBaseRefreshTokenRequest();
+    message.refreshToken = object.refreshToken ?? "";
+    return message;
+  },
+};
+
+function createBaseRefreshTokenResponse(): RefreshTokenResponse {
+  return { isValid: false, accessToken: "" };
+}
+
+export const RefreshTokenResponse: MessageFns<RefreshTokenResponse> = {
+  encode(message: RefreshTokenResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.isValid !== false) {
+      writer.uint32(8).bool(message.isValid);
+    }
+    if (message.accessToken !== "") {
+      writer.uint32(18).string(message.accessToken);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): RefreshTokenResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseRefreshTokenResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          if (tag !== 8) {
+            break;
+          }
+
+          message.isValid = reader.bool();
+          continue;
+        case 2:
+          if (tag !== 18) {
+            break;
+          }
+
+          message.accessToken = reader.string();
+          continue;
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): RefreshTokenResponse {
+    return {
+      isValid: isSet(object.isValid) ? globalThis.Boolean(object.isValid) : false,
+      accessToken: isSet(object.accessToken) ? globalThis.String(object.accessToken) : "",
+    };
+  },
+
+  toJSON(message: RefreshTokenResponse): unknown {
+    const obj: any = {};
+    if (message.isValid !== false) {
+      obj.isValid = message.isValid;
+    }
+    if (message.accessToken !== "") {
+      obj.accessToken = message.accessToken;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<RefreshTokenResponse>, I>>(base?: I): RefreshTokenResponse {
+    return RefreshTokenResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<RefreshTokenResponse>, I>>(object: I): RefreshTokenResponse {
+    const message = createBaseRefreshTokenResponse();
+    message.isValid = object.isValid ?? false;
+    message.accessToken = object.accessToken ?? "";
+    return message;
+  },
+};
+
 export interface AuthService {
   ValidateToken(request: TokenRequest): Promise<TokenResponse>;
   RegisterUser(request: CreateUserRequest): Promise<UserResponse>;
   LoginUser(request: LoginUserRequest): Promise<LoginUserResponse>;
+  RefreshAccessToken(request: RefreshTokenRequest): Promise<RefreshTokenResponse>;
 }
 
 export const AuthServiceServiceName = "auth.AuthService";
@@ -513,6 +654,7 @@ export class AuthServiceClientImpl implements AuthService {
     this.ValidateToken = this.ValidateToken.bind(this);
     this.RegisterUser = this.RegisterUser.bind(this);
     this.LoginUser = this.LoginUser.bind(this);
+    this.RefreshAccessToken = this.RefreshAccessToken.bind(this);
   }
   ValidateToken(request: TokenRequest): Promise<TokenResponse> {
     const data = TokenRequest.encode(request).finish();
@@ -530,6 +672,12 @@ export class AuthServiceClientImpl implements AuthService {
     const data = LoginUserRequest.encode(request).finish();
     const promise = this.rpc.request(this.service, "LoginUser", data);
     return promise.then((data) => LoginUserResponse.decode(new BinaryReader(data)));
+  }
+
+  RefreshAccessToken(request: RefreshTokenRequest): Promise<RefreshTokenResponse> {
+    const data = RefreshTokenRequest.encode(request).finish();
+    const promise = this.rpc.request(this.service, "RefreshAccessToken", data);
+    return promise.then((data) => RefreshTokenResponse.decode(new BinaryReader(data)));
   }
 }
 

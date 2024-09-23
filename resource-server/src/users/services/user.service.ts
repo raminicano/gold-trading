@@ -3,6 +3,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { AuthGrpcService } from '../../auth/grpc/auth-grpc.service';
 import { CreateUserDto } from '../dto/createUser.dto';
 import { LoginDto } from 'users/dto/loginUser.dto';
+import { ReaccessDto } from 'users/dto/reaccess.dto';
 
 @Injectable()
 export class UserService {
@@ -90,6 +91,29 @@ export class UserService {
       data: {
         accessToken: grpcResponse.accessToken,
         refreshToken: grpcResponse.refreshToken,
+      },
+    };
+  }
+
+  // 액세스 토큰 재발급
+  async refreshToken(ReaccessDto: ReaccessDto) {
+    const { refreshToken } = ReaccessDto;
+    // gRPC 요청을 통해 인증 서버에 refreshToken을 전송하여 accessToken 재발급
+    const grpcResponse =
+      await this.authGrpcService.refreshAccessToken(refreshToken);
+
+    if (!grpcResponse || !grpcResponse.isValid) {
+      throw new HttpException(
+        'Invalid or expired refresh token',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+
+    return {
+      success: true,
+      message: 'Token refreshed successfully',
+      data: {
+        accessToken: grpcResponse.accessToken,
       },
     };
   }
