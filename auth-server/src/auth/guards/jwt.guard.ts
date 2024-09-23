@@ -49,6 +49,7 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
       request.user = payload;
       return true;
     } catch (err) {
+      console.log(err);
       throw new UnauthorizedException('Invalid or expired JWT token');
     }
   }

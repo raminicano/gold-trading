@@ -117,4 +117,16 @@ export class UserService {
       },
     };
   }
+
+  // 로그아웃 로직
+  async logout(data: string) {
+    const grpcResponse = await this.authGrpcService.logoutUser(data);
+    if (!grpcResponse || !grpcResponse.isValid) {
+      throw new HttpException(
+        'Invalid or expired access token',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+    return { statusCode: HttpStatus.NO_CONTENT };
+  }
 }

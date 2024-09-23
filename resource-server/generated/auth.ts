@@ -642,6 +642,7 @@ export interface AuthService {
   RegisterUser(request: CreateUserRequest): Promise<UserResponse>;
   LoginUser(request: LoginUserRequest): Promise<LoginUserResponse>;
   RefreshAccessToken(request: RefreshTokenRequest): Promise<RefreshTokenResponse>;
+  LogoutUser(request: TokenRequest): Promise<TokenResponse>;
 }
 
 export const AuthServiceServiceName = "auth.AuthService";
@@ -655,6 +656,7 @@ export class AuthServiceClientImpl implements AuthService {
     this.RegisterUser = this.RegisterUser.bind(this);
     this.LoginUser = this.LoginUser.bind(this);
     this.RefreshAccessToken = this.RefreshAccessToken.bind(this);
+    this.LogoutUser = this.LogoutUser.bind(this);
   }
   ValidateToken(request: TokenRequest): Promise<TokenResponse> {
     const data = TokenRequest.encode(request).finish();
@@ -678,6 +680,12 @@ export class AuthServiceClientImpl implements AuthService {
     const data = RefreshTokenRequest.encode(request).finish();
     const promise = this.rpc.request(this.service, "RefreshAccessToken", data);
     return promise.then((data) => RefreshTokenResponse.decode(new BinaryReader(data)));
+  }
+
+  LogoutUser(request: TokenRequest): Promise<TokenResponse> {
+    const data = TokenRequest.encode(request).finish();
+    const promise = this.rpc.request(this.service, "LogoutUser", data);
+    return promise.then((data) => TokenResponse.decode(new BinaryReader(data)));
   }
 }
 
