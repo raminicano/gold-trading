@@ -3,6 +3,7 @@ import { UserService } from '../services/user.service';
 import { CreateUserDto } from '../dto/createUser.dto';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { LoginDto } from '../dto/loginUser.dto';
+import { ReaccessDto } from '../dto/reaccess.dto';
 
 @ApiTags('users')
 @Controller('users')
@@ -30,5 +31,14 @@ export class UserController {
   @Post('login')
   async login(@Body() loginDto: LoginDto) {
     return this.userService.loginUser(loginDto);
+  }
+
+  // 액세스 토큰 재발급 API
+  @ApiOperation({ summary: 'AccessToken 재발급' })
+  @ApiResponse({ status: 200, description: 'Token refreshed successfully' })
+  @ApiResponse({ status: 401, description: 'Invalid or expired refresh token' })
+  @Post('refresh')
+  async refreshAccessToken(@Body() reaccessDto: ReaccessDto) {
+    return this.userService.refreshToken(reaccessDto);
   }
 }

@@ -6,6 +6,8 @@ import {
   UserResponse,
   LoginUserRequest,
   LoginUserResponse,
+  RefreshTokenRequest,
+  RefreshTokenResponse,
 } from '../../../generated/auth';
 import { UserService } from '../../users/services/user.service';
 
@@ -40,5 +42,13 @@ export class AuthGrpcController {
 
     const tokens = await this.authService.login(username, password);
     return tokens;
+  }
+
+  // gRPC에서 RefreshAccessToken 메서드 처리
+  @GrpcMethod('AuthService', 'RefreshAccessToken')
+  async refreshToken(data: RefreshTokenRequest): Promise<RefreshTokenResponse> {
+    const { refreshToken } = data;
+    const response = await this.authService.refreshToken(refreshToken);
+    return response;
   }
 }

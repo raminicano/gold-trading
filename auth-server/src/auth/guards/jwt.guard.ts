@@ -14,6 +14,25 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
     super();
   }
 
+  verifyToken(token: string) {
+    try {
+      const payload = this.jwtService.verify(token, {
+        secret: process.env.JWT_SECRET,
+      });
+      const userId = payload.userId;
+
+      return userId;
+    } catch (err) {
+      if (err.name === 'TokenExpiredError') {
+        const userId = '';
+        return userId;
+      }
+      console.log(err);
+      const userId = '';
+      return userId;
+    }
+  }
+
   canActivate(context: ExecutionContext) {
     const request = context.switchToHttp().getRequest();
     const token = this.extractTokenFromHeader(request);
