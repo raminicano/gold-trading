@@ -129,4 +129,34 @@ export class UserService {
     }
     return { statusCode: HttpStatus.NO_CONTENT };
   }
+
+  // 비밀번호 재생성
+  async modifyPassword(accessToken: string, password: string) {
+    // 1. 비밀번호 정규표현식 확인
+    const passwordRegex =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+
+    if (!passwordRegex.test(password)) {
+      throw new HttpException(
+        'Invalid password format',
+        HttpStatus.BAD_REQUEST,
+      ); // 400
+    }
+
+    // 2. gRPC요청으로 비밀번호 재생성
+    const grpcResponse = await this.authGrpcService.modifyPassword(
+      accessToken,
+      password,
+    );
+
+    // 3. 유효성 검증
+    if (!grpcResponse || !grpcResponse.isValid) {
+      throw new HttpException(
+        'Invalid or expired access token',
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+
+    return { statusCode: HttpStatus.NO_CONTENT };
+  }
 }

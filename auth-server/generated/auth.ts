@@ -49,6 +49,16 @@ export interface RefreshTokenResponse {
   accessToken: string;
 }
 
+export interface ModifyPasswordRequest {
+  accessToken: string;
+  password: string;
+}
+
+export interface ModifyPasswordResponse {
+  isValid: boolean;
+  status: number;
+}
+
 function createBaseTokenRequest(): TokenRequest {
   return { accessToken: "" };
 }
@@ -637,12 +647,161 @@ export const RefreshTokenResponse: MessageFns<RefreshTokenResponse> = {
   },
 };
 
+function createBaseModifyPasswordRequest(): ModifyPasswordRequest {
+  return { accessToken: "", password: "" };
+}
+
+export const ModifyPasswordRequest: MessageFns<ModifyPasswordRequest> = {
+  encode(message: ModifyPasswordRequest, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.accessToken !== "") {
+      writer.uint32(10).string(message.accessToken);
+    }
+    if (message.password !== "") {
+      writer.uint32(18).string(message.password);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ModifyPasswordRequest {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseModifyPasswordRequest();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          if (tag !== 10) {
+            break;
+          }
+
+          message.accessToken = reader.string();
+          continue;
+        case 2:
+          if (tag !== 18) {
+            break;
+          }
+
+          message.password = reader.string();
+          continue;
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ModifyPasswordRequest {
+    return {
+      accessToken: isSet(object.accessToken) ? globalThis.String(object.accessToken) : "",
+      password: isSet(object.password) ? globalThis.String(object.password) : "",
+    };
+  },
+
+  toJSON(message: ModifyPasswordRequest): unknown {
+    const obj: any = {};
+    if (message.accessToken !== "") {
+      obj.accessToken = message.accessToken;
+    }
+    if (message.password !== "") {
+      obj.password = message.password;
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ModifyPasswordRequest>, I>>(base?: I): ModifyPasswordRequest {
+    return ModifyPasswordRequest.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ModifyPasswordRequest>, I>>(object: I): ModifyPasswordRequest {
+    const message = createBaseModifyPasswordRequest();
+    message.accessToken = object.accessToken ?? "";
+    message.password = object.password ?? "";
+    return message;
+  },
+};
+
+function createBaseModifyPasswordResponse(): ModifyPasswordResponse {
+  return { isValid: false, status: 0 };
+}
+
+export const ModifyPasswordResponse: MessageFns<ModifyPasswordResponse> = {
+  encode(message: ModifyPasswordResponse, writer: BinaryWriter = new BinaryWriter()): BinaryWriter {
+    if (message.isValid !== false) {
+      writer.uint32(8).bool(message.isValid);
+    }
+    if (message.status !== 0) {
+      writer.uint32(16).int32(message.status);
+    }
+    return writer;
+  },
+
+  decode(input: BinaryReader | Uint8Array, length?: number): ModifyPasswordResponse {
+    const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
+    let end = length === undefined ? reader.len : reader.pos + length;
+    const message = createBaseModifyPasswordResponse();
+    while (reader.pos < end) {
+      const tag = reader.uint32();
+      switch (tag >>> 3) {
+        case 1:
+          if (tag !== 8) {
+            break;
+          }
+
+          message.isValid = reader.bool();
+          continue;
+        case 2:
+          if (tag !== 16) {
+            break;
+          }
+
+          message.status = reader.int32();
+          continue;
+      }
+      if ((tag & 7) === 4 || tag === 0) {
+        break;
+      }
+      reader.skip(tag & 7);
+    }
+    return message;
+  },
+
+  fromJSON(object: any): ModifyPasswordResponse {
+    return {
+      isValid: isSet(object.isValid) ? globalThis.Boolean(object.isValid) : false,
+      status: isSet(object.status) ? globalThis.Number(object.status) : 0,
+    };
+  },
+
+  toJSON(message: ModifyPasswordResponse): unknown {
+    const obj: any = {};
+    if (message.isValid !== false) {
+      obj.isValid = message.isValid;
+    }
+    if (message.status !== 0) {
+      obj.status = Math.round(message.status);
+    }
+    return obj;
+  },
+
+  create<I extends Exact<DeepPartial<ModifyPasswordResponse>, I>>(base?: I): ModifyPasswordResponse {
+    return ModifyPasswordResponse.fromPartial(base ?? ({} as any));
+  },
+  fromPartial<I extends Exact<DeepPartial<ModifyPasswordResponse>, I>>(object: I): ModifyPasswordResponse {
+    const message = createBaseModifyPasswordResponse();
+    message.isValid = object.isValid ?? false;
+    message.status = object.status ?? 0;
+    return message;
+  },
+};
+
 export interface AuthService {
   ValidateToken(request: TokenRequest): Promise<TokenResponse>;
   RegisterUser(request: CreateUserRequest): Promise<UserResponse>;
   LoginUser(request: LoginUserRequest): Promise<LoginUserResponse>;
   RefreshAccessToken(request: RefreshTokenRequest): Promise<RefreshTokenResponse>;
   LogoutUser(request: TokenRequest): Promise<TokenResponse>;
+  ModifyPassword(request: ModifyPasswordRequest): Promise<ModifyPasswordResponse>;
 }
 
 export const AuthServiceServiceName = "auth.AuthService";
@@ -657,6 +816,7 @@ export class AuthServiceClientImpl implements AuthService {
     this.LoginUser = this.LoginUser.bind(this);
     this.RefreshAccessToken = this.RefreshAccessToken.bind(this);
     this.LogoutUser = this.LogoutUser.bind(this);
+    this.ModifyPassword = this.ModifyPassword.bind(this);
   }
   ValidateToken(request: TokenRequest): Promise<TokenResponse> {
     const data = TokenRequest.encode(request).finish();
@@ -686,6 +846,12 @@ export class AuthServiceClientImpl implements AuthService {
     const data = TokenRequest.encode(request).finish();
     const promise = this.rpc.request(this.service, "LogoutUser", data);
     return promise.then((data) => TokenResponse.decode(new BinaryReader(data)));
+  }
+
+  ModifyPassword(request: ModifyPasswordRequest): Promise<ModifyPasswordResponse> {
+    const data = ModifyPasswordRequest.encode(request).finish();
+    const promise = this.rpc.request(this.service, "ModifyPassword", data);
+    return promise.then((data) => ModifyPasswordResponse.decode(new BinaryReader(data)));
   }
 }
 

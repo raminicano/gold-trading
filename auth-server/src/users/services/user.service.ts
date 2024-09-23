@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
-import { User, Token } from '@prisma/client';
+import { User } from '@prisma/client';
 
 // 사용자 등록과 관련된 로직
 // 새로운 사용자를 데이터베이스에 저장하고 사용자 정보를 반환
@@ -34,29 +34,34 @@ export class UserService {
     return user;
   }
 
+  // 사용자 검색 후 패스워드 변경
+  async updateUser(id: number, password: string): Promise<User> {
+    return this.prisma.user.update({
+      where: { id },
+      data: { password },
+    });
+  }
+
+  // 사용자 이름으로 검색
   async findUserByUsername(username: string) {
     return this.prisma.user.findUnique({
       where: { username },
     });
   }
 
-  async createToken(
-    userId: number,
-    refreshToken: string,
-    expiresAt: Date,
-  ): Promise<Token> {
-    return this.prisma.token.create({
-      data: {
-        userId,
-        refreshToken,
-        expiresAt,
-      },
+  // 사용자 아이디로 검색
+  async findUserById(id: number) {
+    return this.prisma.user.findUnique({
+      where: { id },
     });
   }
 
-  async findTokenByUserId(userId: number) {
-    return this.prisma.token.findMany({
-      where: { userId },
+  // 사용자 비밀번호 업데이트
+  async changePassword(id: number, password: string): Promise<User> {
+    const hashedPassword = await bcrypt.hash(password, 10);
+    return this.prisma.user.update({
+      where: { id },
+      data: { password: hashedPassword },
     });
   }
 }
