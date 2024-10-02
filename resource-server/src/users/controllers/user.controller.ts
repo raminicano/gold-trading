@@ -19,11 +19,15 @@ import { LoginDto } from '../dto/loginUser.dto';
 import { ReaccessDto } from '../dto/reaccess.dto';
 import { Request } from 'express';
 import { UpdateUserDto } from 'users/dto/updateUser.dto';
+import { JwtGuard } from 'auth/guards/jwt.guard';
 
 @ApiTags('users')
 @Controller('users')
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly userService: UserService,
+    private jwtGuard: JwtGuard,
+  ) {}
 
   // 회원가입 API
   @ApiOperation({ summary: '회원가입' })
@@ -45,6 +49,7 @@ export class UserController {
   @ApiResponse({ status: 401, description: '비밀번호가 틀림' })
   @Post('login')
   async login(@Body() loginDto: LoginDto) {
+    console.log(loginDto);
     return this.userService.loginUser(loginDto);
   }
 
@@ -70,15 +75,7 @@ export class UserController {
   @Post('logout')
   async logout(@Req() request: Request) {
     // 1. Request 객체에서 Authorization 헤더 추출
-    const authorizationHeader = request.headers['authorization'];
-    console.log(authorizationHeader);
-
-    if (!authorizationHeader) {
-      throw new BadRequestException('Access Token이 누락되었습니다.');
-    }
-
-    const token = authorizationHeader.split(' ')[1]; // Bearer {token}에서 {token}만 추출
-
+    const token = this.jwtGuard.extractTokenFromHeader(request);
     if (!token) {
       throw new BadRequestException('유효한 Access Token이 아닙니다.');
     }

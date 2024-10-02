@@ -160,4 +160,17 @@ export class AuthService {
 
     return { isValid, status: 204 };
   }
+
+  // 토큰 유효성 검증
+  async validateToken(
+    accessToken: string,
+  ): Promise<{ isValid: boolean; userId: string }> {
+    const userId = this.jwtGuard.verifyToken(accessToken);
+
+    if (!userId) {
+      return { isValid: false, userId: '' };
+    }
+
+    return { isValid: true, userId: userId };
+  }
 }

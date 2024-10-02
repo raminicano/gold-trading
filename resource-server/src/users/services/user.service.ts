@@ -159,4 +159,11 @@ export class UserService {
 
     return { statusCode: HttpStatus.NO_CONTENT };
   }
+
+  // 유저이름으로 id 찾기
+  async findUserByUsername(username: string) {
+    return await this.prisma.user.findUnique({
+      where: { username },
+    });
+  }
 }
