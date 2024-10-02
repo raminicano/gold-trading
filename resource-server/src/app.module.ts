@@ -9,6 +9,9 @@ import { UserService } from './users/services/user.service';
 import { UserController } from './users/controllers/user.controller';
 import { join } from 'path';
 import { PrismaService } from './prisma/prisma.service';
+import { JwtGuard } from 'auth/guards/jwt.guard';
+import { OrderController } from 'orders/controllers/order.controller';
+import { OrderService } from 'orders/services/order.service';
 
 @Module({
   imports: [
@@ -27,7 +30,14 @@ import { PrismaService } from './prisma/prisma.service';
       },
     ]),
   ],
-  controllers: [AppController, UserController],
-  providers: [AppService, AuthGrpcService, UserService, PrismaService],
+  controllers: [AppController, UserController, OrderController],
+  providers: [
+    AppService,
+    AuthGrpcService,
+    UserService,
+    PrismaService,
+    JwtGuard,
+    OrderService,
+  ],
 })
 export class AppModule {}

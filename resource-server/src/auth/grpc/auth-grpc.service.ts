@@ -25,6 +25,7 @@ interface AuthServiceWrapper {
   ModifyPassword(
     request: ModifyPasswordRequest,
   ): Observable<ModifyPasswordResponse>;
+  ValidateToken(request: TokenRequest): Observable<TokenResponse>;
 }
 
 @Injectable()
@@ -91,6 +92,14 @@ export class AuthGrpcService implements OnModuleInit {
     const request: ModifyPasswordRequest = { accessToken, password };
     const observableResponse: Observable<ModifyPasswordResponse> =
       this.authService.ModifyPassword(request);
+    return await lastValueFrom(observableResponse);
+  }
+
+  // 토큰 유효성 검증
+  async validateToken(accessToken: string): Promise<TokenResponse> {
+    const request: TokenRequest = { accessToken };
+    const observableResponse: Observable<TokenResponse> =
+      this.authService.ValidateToken(request);
     return await lastValueFrom(observableResponse);
   }
 }

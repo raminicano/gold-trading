@@ -76,4 +76,12 @@ export class AuthGrpcController {
     );
     return response;
   }
+
+  // gRPC에서 토큰 유효성 검증 및 userId 추출
+  @GrpcMethod('AuthService', 'ValidateToken')
+  async validateToken(data: TokenRequest): Promise<TokenResponse> {
+    const { accessToken } = data;
+    const response = await this.authService.validateToken(accessToken);
+    return response;
+  }
 }
