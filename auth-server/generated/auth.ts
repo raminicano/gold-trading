@@ -16,6 +16,7 @@ export interface TokenRequest {
 export interface TokenResponse {
   isValid: boolean;
   userId: string;
+  role: string;
 }
 
 export interface CreateUserRequest {
@@ -117,7 +118,7 @@ export const TokenRequest: MessageFns<TokenRequest> = {
 };
 
 function createBaseTokenResponse(): TokenResponse {
-  return { isValid: false, userId: "" };
+  return { isValid: false, userId: "", role: "" };
 }
 
 export const TokenResponse: MessageFns<TokenResponse> = {
@@ -127,6 +128,9 @@ export const TokenResponse: MessageFns<TokenResponse> = {
     }
     if (message.userId !== "") {
       writer.uint32(18).string(message.userId);
+    }
+    if (message.role !== "") {
+      writer.uint32(26).string(message.role);
     }
     return writer;
   },
@@ -152,6 +156,13 @@ export const TokenResponse: MessageFns<TokenResponse> = {
 
           message.userId = reader.string();
           continue;
+        case 3:
+          if (tag !== 26) {
+            break;
+          }
+
+          message.role = reader.string();
+          continue;
       }
       if ((tag & 7) === 4 || tag === 0) {
         break;
@@ -165,6 +176,7 @@ export const TokenResponse: MessageFns<TokenResponse> = {
     return {
       isValid: isSet(object.isValid) ? globalThis.Boolean(object.isValid) : false,
       userId: isSet(object.userId) ? globalThis.String(object.userId) : "",
+      role: isSet(object.role) ? globalThis.String(object.role) : "",
     };
   },
 
@@ -176,6 +188,9 @@ export const TokenResponse: MessageFns<TokenResponse> = {
     if (message.userId !== "") {
       obj.userId = message.userId;
     }
+    if (message.role !== "") {
+      obj.role = message.role;
+    }
     return obj;
   },
 
@@ -186,6 +201,7 @@ export const TokenResponse: MessageFns<TokenResponse> = {
     const message = createBaseTokenResponse();
     message.isValid = object.isValid ?? false;
     message.userId = object.userId ?? "";
+    message.role = object.role ?? "";
     return message;
   },
 };

@@ -10,6 +10,7 @@ import { UserController } from './users/controllers/user.controller';
 import { join } from 'path';
 import { PrismaService } from './prisma/prisma.service';
 import { JwtGuard } from 'auth/guards/jwt.guard';
+import { AdminGuard } from 'auth/guards/admin.guard';
 import { OrderController } from 'orders/controllers/order.controller';
 import { OrderService } from 'orders/services/order.service';
 
@@ -38,6 +39,7 @@ import { OrderService } from 'orders/services/order.service';
     PrismaService,
     JwtGuard,
     OrderService,
+    AdminGuard,
   ],
 })
 export class AppModule {}

@@ -19,6 +19,7 @@ message TokenRequest {
 message TokenResponse {
   bool isValid = 1;
   string userId = 2;
+  string role = 3;
 }
 
 message CreateUserRequest {
