@@ -11,7 +11,10 @@ async function bootstrap() {
     .setDescription('자원 서버 API 문서')
     .setVersion('1.0')
     .addTag('users')
-    .addBearerAuth()
+    .addBearerAuth(
+      { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' }, // Bearer 토큰 설정
+      'accessToken', // 토큰 키
+    )
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
@@ -25,6 +28,10 @@ async function bootstrap() {
       transform: true, // 요청 데이터를 DTO로 자동 변환
     }),
   );
+
+  app.enableCors({
+    allowedHeaders: 'Authorization, Content-Type',
+  });
 
   await app.listen(9999); // 요구사항 자원서버는 9999포트
 }

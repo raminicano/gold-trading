@@ -2,6 +2,8 @@ import {
   Injectable,
   ConflictException,
   BadRequestException,
+  NotFoundException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateOrderDto } from '../dto/create-order.dto';
@@ -78,7 +80,7 @@ export class OrderService {
       });
     }
 
-    const amount = quantity * price; // 총 금액 계산
+    const amount = Number(quantity) * price; // 총 금액 계산
 
     const orderId = this.generateOrderId((await user).username);
 
@@ -112,5 +114,51 @@ export class OrderService {
         },
       });
     }
+  }
+
+  async getOrderById(type: 'buy' | 'sell', orderId: string, userId: number) {
+    // 'buy' 또는 'sell'에 따라 적절한 테이블에서 주문 조회
+    let order;
+    if (type === 'buy') {
+      order = await this.prisma.buyOrder.findFirst({
+        where: { orderId },
+      });
+    } else if (type === 'sell') {
+      order = await this.prisma.sellOrder.findFirst({
+        where: { orderId },
+      });
+    }
+
+    if (!order) {
+      throw new NotFoundException({
+        success: false,
+        message: '주문을 찾을 수 없습니다.',
+        data: {},
+      });
+    }
+
+    // 주문 조회 성공 시 유저 정보와 비교 (로그인한 사용자가 자신의 주문만 조회 가능)
+    if (order.userId !== userId) {
+      throw new ForbiddenException({
+        success: false,
+        message: '유효하지 않은 접근입니다.',
+        data: {},
+      });
+    }
+
+    return {
+      success: true,
+      message: '주문 세부 정보 검색을 성공하였습니다.',
+      data: {
+        orderId: order.orderId,
+        itemId: order.itemId,
+        quantity: order.quantity,
+        price: order.price,
+        amount: order.quantity * order.price,
+        status: order.status,
+        orderDate: order.orderDate,
+        deliveryAddress: order.deliveryAddress,
+      },
+    };
   }
 }
