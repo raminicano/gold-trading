@@ -161,4 +161,43 @@ export class OrderService {
       },
     };
   }
+
+  async getOrdersByUsername(type: 'buy' | 'sell', username: string) {
+    // 유저이름으로 유저 찾기
+    const user = await this.userService.findUserByUsername(username);
+    if (!user) {
+      throw new NotFoundException({
+        success: false,
+        message: '유저를 찾을 수 없습니다.',
+        data: {},
+      });
+    }
+
+    // 'buy' 또는 'sell'에 따라 적절한 테이블에서 주문 조회
+    let orders;
+    if (type === 'buy') {
+      orders = await this.prisma.buyOrder.findMany({
+        where: { userId: user.userId },
+      });
+    } else if (type === 'sell') {
+      orders = await this.prisma.sellOrder.findFirst({
+        where: { userId: user.userId },
+      });
+    }
+
+    return {
+      success: true,
+      message: 'All orders retrieved successfully',
+      data: orders.map((order) => ({
+        orderId: order.orderId,
+        itemId: order.itemId,
+        quantity: order.quantity,
+        price: order.price,
+        amount: order.amount,
+        status: order.status,
+        orderDate: order.orderDate,
+        deliveryAddress: order.deliveryAddress,
+      })),
+    };
+  }
 }

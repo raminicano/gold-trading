@@ -17,6 +17,7 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { JwtGuard } from '../../auth/guards/jwt.guard';
+import { AdminGuard } from '../../auth/guards/admin.guard';
 import { OrderService } from '../services/order.service';
 import { CreateOrderDto } from '../dto/create-order.dto';
 
@@ -75,5 +76,32 @@ export class OrderController {
   ) {
     const userId = Number(request['userId']); // jwt guard에서 추출한 userid
     return await this.orderService.getOrderById(type, orderId, userId);
+  }
+
+  // 사용자 주문 조회
+  @UseGuards(AdminGuard)
+  @Get('admin/:type/:username')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: "Get buy orders by username (Admin or user's own orders)",
+  })
+  @ApiParam({
+    name: 'type',
+    enum: ['buy', 'sell'],
+    description: 'Order type (buy or sell)',
+  })
+  @ApiParam({
+    name: 'username',
+    description: 'Username of the user to retrieve orders',
+  })
+  @ApiResponse({ status: 200, description: 'Orders retrieved successfully' })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  async getOrders(
+    @Param('username') username: string,
+    @Param('type') type: 'buy' | 'sell',
+  ) {
+    return await this.orderService.getOrdersByUsername(type, username);
   }
 }

@@ -20,8 +20,9 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
         secret: process.env.JWT_SECRET,
       });
       const userId = payload.userId;
+      const role = payload.role;
 
-      return userId;
+      return { userId, role };
     } catch (err) {
       console.log(err);
       throw new UnauthorizedException('유효하지 않은 Access Token입니다.');

@@ -17,8 +17,8 @@ export class AuthService {
   ) {}
 
   // JWT 토큰 생성 함수
-  generateToken(userId: number): string {
-    const payload = { userId };
+  generateToken(userId: number, role: string): string {
+    const payload = { userId, role };
     const accessToken = jwt.sign(payload, process.env.JWT_SECRET, {
       expiresIn: '1h',
     });
@@ -74,7 +74,7 @@ export class AuthService {
       return { isValid, accessToken: '', refreshToken: '' };
     }
     const isValid = true;
-    const accessToken = this.generateToken(user.id);
+    const accessToken = this.generateToken(user.id, user.role);
     const refreshToken = await this.generateAndStoreRefreshToken(user.id);
 
     return { isValid, accessToken, refreshToken };
@@ -85,18 +85,18 @@ export class AuthService {
     refreshToken: string,
   ): Promise<{ isValid: boolean; accessToken: string }> {
     //  1. refreshToken에서 userId 추출 및 만료 여부 판별
-    const userId = this.jwtGuard.verifyToken(refreshToken);
+    const data = this.jwtGuard.verifyToken(refreshToken);
     let isValid = false;
     let accessToken = '';
 
-    if (!userId) {
+    if (!data.userId) {
       return { isValid, accessToken };
     }
 
     // 2. DB에서 userId와 refreshToken이 일치하는지 확인
     const tokenEntry: Token = await this.prisma.token.findFirst({
       where: {
-        userId: userId,
+        userId: data.userId,
         expiresAt: {
           gte: new Date(),
         },
@@ -112,7 +112,7 @@ export class AuthService {
     }
 
     // 4. 새 accessToken 발급
-    const newAccessToekn = this.generateToken(userId);
+    const newAccessToekn = this.generateToken(data.userId, data.role);
     isValid = true;
     accessToken = newAccessToekn;
     return { isValid, accessToken };
@@ -121,13 +121,15 @@ export class AuthService {
   // 로그아웃 로직
   async logout(
     accessToken: string,
-  ): Promise<{ isValid: boolean; userId: string }> {
+  ): Promise<{ isValid: boolean; userId: string; role: string }> {
     // 1. 액세스토큰을 통해 사용자 정보 추출 (유효성 검증 포함)
-    const userId = this.jwtGuard.verifyToken(accessToken);
+    const data = this.jwtGuard.verifyToken(accessToken);
     let isValid = false;
+    const userId = data.userId;
+    const role = data.role;
 
     if (!userId) {
-      return { isValid, userId: '' };
+      return { isValid, userId: '', role: '' };
     }
 
     // 2. 사용자 id로 토큰테이블에서 refreshToken을 업데이트
@@ -138,7 +140,7 @@ export class AuthService {
 
     isValid = true;
 
-    return { isValid, userId };
+    return { isValid, userId, role };
   }
 
   // 패스워드 수정 로직
@@ -147,8 +149,9 @@ export class AuthService {
     password: string,
   ): Promise<{ isValid: boolean; status: number }> {
     // 1. 액세스토큰을 통해 사용자 정보 추출 (유효성 검증 포함)
-    const userId = this.jwtGuard.verifyToken(accessToken);
+    const data = this.jwtGuard.verifyToken(accessToken);
     let isValid = false;
+    const userId = data.userId;
 
     if (!userId) {
       return { isValid, status: 401 };
@@ -164,14 +167,14 @@ export class AuthService {
   // 토큰 유효성 검증
   async validateToken(
     accessToken: string,
-  ): Promise<{ isValid: boolean; userId: string }> {
+  ): Promise<{ isValid: boolean; userId: string; role: string }> {
     try {
-      const userId = this.jwtGuard.verifyToken(accessToken);
+      const user = this.jwtGuard.verifyToken(accessToken);
 
-      if (!userId) {
-        return { isValid: false, userId: '' };
+      if (!user.userId) {
+        return { isValid: false, userId: '', role: '' };
       } else {
-        return { isValid: true, userId: userId };
+        return { isValid: true, userId: user.userId, role: user.role };
       }
     } catch (error) {
       // gRPC에서 Unauthorized 에러를 처리하고 반환
