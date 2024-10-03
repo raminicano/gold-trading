@@ -26,7 +26,7 @@ export class CreateOrderDto {
   })
   @IsDecimal({ decimal_digits: '2' })
   @IsNotEmpty()
-  quantity: number;
+  quantity: string;
 
   @ApiProperty({ example: 5000, description: 'Price per gram (in KRW)' })
   @IsNumber()

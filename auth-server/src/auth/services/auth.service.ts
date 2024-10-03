@@ -165,12 +165,17 @@ export class AuthService {
   async validateToken(
     accessToken: string,
   ): Promise<{ isValid: boolean; userId: string }> {
-    const userId = this.jwtGuard.verifyToken(accessToken);
+    try {
+      const userId = this.jwtGuard.verifyToken(accessToken);
 
-    if (!userId) {
-      return { isValid: false, userId: '' };
+      if (!userId) {
+        return { isValid: false, userId: '' };
+      } else {
+        return { isValid: true, userId: userId };
+      }
+    } catch (error) {
+      // gRPC에서 Unauthorized 에러를 처리하고 반환
+      throw error; // NestJS가 자동으로 401 에러를 발생시킴
     }
-
-    return { isValid: true, userId: userId };
   }
 }

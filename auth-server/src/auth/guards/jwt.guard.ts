@@ -23,13 +23,8 @@ export class JwtAuthGuard extends AuthGuard('jwt') {
 
       return userId;
     } catch (err) {
-      if (err.name === 'TokenExpiredError') {
-        const userId = '';
-        return userId;
-      }
       console.log(err);
-      const userId = '';
-      return userId;
+      throw new UnauthorizedException('유효하지 않은 Access Token입니다.');
     }
   }
 
