@@ -154,7 +154,7 @@ export class OrderService {
         itemId: order.itemId,
         quantity: order.quantity,
         price: order.price,
-        amount: order.quantity * order.price,
+        amount: order.amount,
         status: order.status,
         orderDate: order.orderDate,
         deliveryAddress: order.deliveryAddress,
@@ -198,6 +198,100 @@ export class OrderService {
         orderDate: order.orderDate,
         deliveryAddress: order.deliveryAddress,
       })),
+    };
+  }
+
+  // 페이지네이션을 통해 주문 내역 조회
+  async getOrdersWithPagination(
+    type: 'buy' | 'sell',
+    userId: number,
+    startDate: string,
+    endDate: string,
+    limit: number,
+    offset: number,
+  ) {
+    // buy 또는 sell에 따라 조회 테이블 변경
+    let orders;
+    let totalCount;
+    if (type === 'buy') {
+      orders = await this.prisma.buyOrder.findMany({
+        where: {
+          userId,
+          orderDate: {
+            gte: new Date(startDate),
+            lte: new Date(endDate),
+          },
+        },
+        skip: offset,
+        take: limit,
+        orderBy: { orderDate: 'desc' },
+      });
+
+      // 전체 개수 확인
+      totalCount = await this.prisma.buyOrder.count({
+        where: {
+          userId,
+          orderDate: {
+            gte: new Date(startDate),
+            lte: new Date(endDate),
+          },
+        },
+      });
+    } else if (type === 'sell') {
+      orders = await this.prisma.sellOrder.findMany({
+        where: {
+          userId,
+          orderDate: {
+            gte: new Date(startDate),
+            lte: new Date(endDate),
+          },
+        },
+        skip: offset,
+        take: limit,
+        orderBy: { orderDate: 'desc' },
+      });
+
+      // 전체 개수 확인
+      totalCount = await this.prisma.sellOrder.count({
+        where: {
+          userId,
+          orderDate: {
+            gte: new Date(startDate),
+            lte: new Date(endDate),
+          },
+        },
+      });
+    }
+
+    // 다음 페이지가 있는지 확인
+    const nextOffset = offset + limit;
+    const hasNextPage = nextOffset < totalCount;
+
+    // 링크 생성
+    const nextLink = hasNextPage
+      ? `/api/${type}/all/pagination?startDate=${startDate}&endDate=${endDate}&limit=${limit}&offset=${nextOffset}`
+      : null;
+
+    return {
+      success: true,
+      message: 'Success to search orders',
+      data: orders.map((order) => ({
+        orderId: order.orderId,
+        itemId: order.itemId,
+        quantity: order.quantity,
+        price: order.price,
+        amount: order.amount,
+        status: order.status,
+        orderDate: order.orderDate,
+        deliveryAddress: order.deliveryAddress,
+      })),
+      links: {
+        next: nextLink,
+        previous:
+          offset > 0
+            ? `/api/${type}/pagination?startDate=${startDate}&endDate=${endDate}&limit=${limit}&offset=${offset - limit}`
+            : null,
+      },
     };
   }
 }

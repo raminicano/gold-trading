@@ -58,3 +58,8 @@ pids
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+
+# faker 를 위한 node.js환경 라이브러리 주석
+package-lock.json
+node_modules
