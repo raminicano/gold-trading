@@ -8,6 +8,7 @@ import {
   Param,
   Get,
   Req,
+  Query,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -103,5 +104,39 @@ export class OrderController {
     @Param('type') type: 'buy' | 'sell',
   ) {
     return await this.orderService.getOrdersByUsername(type, username);
+  }
+
+  // 페이지네이션을 통한 주문 내역 조회 API
+  @UseGuards(JwtGuard)
+  @Get('api/:type/all/pagination')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: '페이지네이션을 통한 주문 내역 조회' })
+  @ApiParam({
+    name: 'type',
+    enum: ['buy', 'sell'],
+    description: 'Order type (buy or sell)',
+  })
+  @ApiResponse({ status: 200, description: 'Search successful' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async getOrdersWithPagination(
+    @Param('type') type: 'buy' | 'sell',
+    @Query('startDate') startDate: string,
+    @Query('endDate') endDate: string,
+    @Query('limit') limit: number = 10,
+    @Query('offset') offset: number = 0,
+    @Req() request: Request,
+  ) {
+    // JWT에서 userId 추출
+    const userId = Number(request['userId']);
+
+    // 서비스로 전달
+    return await this.orderService.getOrdersWithPagination(
+      type,
+      userId,
+      startDate,
+      endDate,
+      Number(limit),
+      Number(offset),
+    );
   }
 }
