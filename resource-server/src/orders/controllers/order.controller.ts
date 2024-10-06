@@ -9,6 +9,7 @@ import {
   Get,
   Req,
   Query,
+  Patch,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -21,6 +22,7 @@ import { JwtGuard } from '../../auth/guards/jwt.guard';
 import { AdminGuard } from '../../auth/guards/admin.guard';
 import { OrderService } from '../services/order.service';
 import { CreateOrderDto } from '../dto/create-order.dto';
+import { UpdateOrderDto } from '../dto/update-order.dto';
 
 @ApiTags('Orders')
 @Controller('orders')
@@ -137,6 +139,46 @@ export class OrderController {
       endDate,
       Number(limit),
       Number(offset),
+    );
+  }
+
+  // 주문 수정
+  @UseGuards(JwtGuard)
+  @Patch('api/:type/:orderId')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Update an order' })
+  @ApiParam({
+    name: 'type',
+    enum: ['buy', 'sell'],
+    description: 'Order type (buy or sell)',
+  })
+  @ApiParam({ name: 'orderId', description: 'Order ID to update' })
+  @ApiResponse({ status: 200, description: 'Order updated successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Not allowed to modify this order',
+  })
+  @ApiResponse({
+    status: 409,
+    description: 'Conflict - Invalid state transition',
+  })
+  async updateOrder(
+    @Param('type') type: 'buy' | 'sell',
+    @Param('orderId') orderId: string,
+    @Body() updateOrderDto: UpdateOrderDto,
+    @Req() request: Request,
+  ) {
+    const userId = Number(request['userId']); // JWT에서 추출된 userId
+    const userRole = request['role']; // JWT에서 추출된 role
+
+    // 주문 수정 로직을 서비스로 전달
+    return await this.orderService.updateOrder(
+      type,
+      orderId,
+      userId,
+      userRole,
+      updateOrderDto,
     );
   }
 }
