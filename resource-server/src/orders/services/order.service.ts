@@ -8,6 +8,7 @@ import {
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateOrderDto } from '../dto/create-order.dto';
 import { UserService } from 'users/services/user.service';
+import { UpdateOrderDto } from '../dto/update-order.dto';
 
 @Injectable()
 export class OrderService {
@@ -291,6 +292,103 @@ export class OrderService {
           offset > 0
             ? `/api/${type}/pagination?startDate=${startDate}&endDate=${endDate}&limit=${limit}&offset=${offset - limit}`
             : null,
+      },
+    };
+  }
+
+  // 주문 상태 변경
+  async updateOrder(
+    type: 'buy' | 'sell',
+    orderId: string,
+    userId: number,
+    userRole: string,
+    updateOrderDto: UpdateOrderDto,
+  ) {
+    // 주문 상태 변경
+    let order;
+    if (type === 'buy') {
+      order = await this.prisma.buyOrder.findFirst({
+        where: { orderId },
+      });
+    } else if (type === 'sell') {
+      order = await this.prisma.sellOrder.findFirst({
+        where: { orderId },
+      });
+    }
+
+    if (!order) {
+      throw new NotFoundException({
+        success: false,
+        message: '주문을 찾을 수 없습니다.',
+        data: {},
+      });
+    }
+
+    // 사용자는 자신의 주문만 수정가능. 관리자는 모든 주문 수정 가능
+    if (order.userId !== userId && userRole !== 'admin') {
+      throw new ForbiddenException({
+        success: false,
+        message: '유효하지 않은 접근입니다.',
+        data: {},
+      });
+    }
+
+    // 상태 전환 체크 (순차적 상태 전환)
+    const validStatusTransitions = {
+      '주문 완료': ['입금 완료'],
+      '입금 완료': ['발송 완료'],
+      '발송 완료': [],
+      '송금 완료': ['수령 완료'],
+    };
+
+    if (updateOrderDto.status) {
+      if (userRole !== 'admin') {
+        throw new ForbiddenException({
+          success: false,
+          message: '관리자만 상태를 변경할 수 있습니다.',
+          data: {},
+        });
+      }
+
+      if (
+        !validStatusTransitions[order.status]?.includes(updateOrderDto.status)
+      ) {
+        throw new ConflictException({
+          success: false,
+          message: `Invalid state transition: Cannot change from '${order.status}' to '${updateOrderDto.status}'. The order must follow the correct process.`,
+          data: {},
+        });
+      }
+    }
+
+    // 주문 수정
+    let updatedOrder;
+    if (type === 'buy') {
+      // buyOrder에 대해 업데이트
+      updatedOrder = await this.prisma.buyOrder.update({
+        where: { orderId },
+        data: {
+          ...updateOrderDto, // status, quantity, deliveryAddress만 업데이트
+        },
+      });
+    } else if (type === 'sell') {
+      // sellOrder에 대해 업데이트
+      updatedOrder = await this.prisma.sellOrder.update({
+        where: { orderId },
+        data: {
+          ...updateOrderDto, // status, quantity, deliveryAddress만 업데이트
+        },
+      });
+    }
+
+    return {
+      success: true,
+      message: 'Order updated successfully',
+      data: {
+        orderId: updatedOrder.orderId,
+        status: updatedOrder.status,
+        quantity: updatedOrder.quantity,
+        deliveryAddress: updatedOrder.deliveryAddress,
       },
     };
   }

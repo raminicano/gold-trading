@@ -31,7 +31,7 @@ model Item {
 
 model BuyOrder {
     id              Int       @id @default(autoincrement())
-    orderId         String // 사람에게 읽기 쉬운 주문 번호 (예: "ORDER-001322")
+    orderId         String    @unique // 사람에게 읽기 쉬운 주문 번호 (예: "ORDER-001322")
     userId          Int
     status          String // 주문 상태 (예: "주문 완료", "입금 완료", "발송 완료")
     itemId          Int
@@ -50,7 +50,7 @@ model BuyOrder {
 
 model SellOrder {
     id              Int       @id @default(autoincrement())
-    orderId         String // 사람에게 읽기 쉬운 주문 번호 (예: "ORDER-001322")
+    orderId         String    @unique // 사람에게 읽기 쉬운 주문 번호 (예: "ORDER-001322")
     userId          Int
     status          String // 주문 상태 (예: "주문 완료", "송금 완료", "수령 완료")
     itemId          Int
