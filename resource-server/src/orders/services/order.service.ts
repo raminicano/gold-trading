@@ -117,7 +117,12 @@ export class OrderService {
     }
   }
 
-  async getOrderById(type: 'buy' | 'sell', orderId: string, userId: number) {
+  async getOrderById(
+    type: 'buy' | 'sell',
+    orderId: string,
+    userId: number,
+    role: string,
+  ) {
     // 'buy' 또는 'sell'에 따라 적절한 테이블에서 주문 조회
     let order;
     if (type === 'buy') {
@@ -139,7 +144,8 @@ export class OrderService {
     }
 
     // 주문 조회 성공 시 유저 정보와 비교 (로그인한 사용자가 자신의 주문만 조회 가능)
-    if (order.userId !== userId) {
+    // 관리자는 조회 가능
+    if (order.userId !== userId && role !== 'admin') {
       throw new ForbiddenException({
         success: false,
         message: '유효하지 않은 접근입니다.',
@@ -391,5 +397,55 @@ export class OrderService {
         deliveryAddress: updatedOrder.deliveryAddress,
       },
     };
+  }
+
+  // Soft delete: 주문의 deletedAt 필드를 업데이트
+  async softDeleteOrder(
+    type: 'buy' | 'sell',
+    orderId: string,
+    userId: number,
+    role: string,
+  ) {
+    // 먼저 getOrderById를 호출하여 주문을 찾고, 권한 체크를 수행
+    await this.getOrderById(type, orderId, userId, role);
+
+    // 권한이 맞는지 확인한 후 soft delete 처리
+    let deletedOrder;
+    if (type === 'buy') {
+      deletedOrder = await this.prisma.buyOrder.update({
+        where: { orderId },
+        data: { deletedAt: new Date() }, // 논리적으로 삭제
+      });
+    } else if (type === 'sell') {
+      deletedOrder = await this.prisma.sellOrder.update({
+        where: { orderId },
+        data: { deletedAt: new Date() }, // 논리적으로 삭제
+      });
+    }
+    return deletedOrder;
+  }
+
+  // Hard delete: 주문을 데이터베이스에서 완전히 삭제
+  async hardDeleteOrder(
+    type: 'buy' | 'sell',
+    orderId: string,
+    userId: number,
+    role: string,
+  ) {
+    // 주문을 먼저 확인하고 삭제 (권한 체크 포함)
+    await this.getOrderById(type, orderId, userId, role);
+
+    // 권한이 맞는지 확인한 후 hard delete 처리
+    let deletedOrder;
+    if (type === 'buy') {
+      deletedOrder = await this.prisma.buyOrder.delete({
+        where: { orderId },
+      });
+    } else if (type === 'sell') {
+      deletedOrder = await this.prisma.sellOrder.delete({
+        where: { orderId },
+      });
+    }
+    return deletedOrder;
   }
 }
