@@ -7,6 +7,7 @@ import * as bcrypt from 'bcrypt';
 import { JwtAuthGuard } from 'auth/guards/jwt.guard';
 import { Token } from '@prisma/client';
 import { UserService } from 'users/services/user.service';
+import { LoggingService } from 'logging/elastic-logger.service';
 
 @Injectable()
 export class AuthService {
@@ -14,6 +15,7 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly jwtGuard: JwtAuthGuard,
     private readonly userService: UserService,
+    private readonly loggingService: LoggingService,
   ) {}
 
   // JWT 토큰 생성 함수
@@ -70,12 +72,19 @@ export class AuthService {
     const user = await this.userService.findUserByUsername(username);
 
     if (!user || !(await bcrypt.compare(password, user.password))) {
+      await this.loggingService.logWarn('auth-logs', {
+        message: `로그인 실패: ${username}`,
+      });
       const isValid = false;
       return { isValid, accessToken: '', refreshToken: '' };
     }
     const isValid = true;
     const accessToken = this.generateToken(user.id, user.role);
     const refreshToken = await this.generateAndStoreRefreshToken(user.id);
+
+    await this.loggingService.logInfo('auth-logs', {
+      message: `로그인 성공: ${username}`,
+    });
 
     return { isValid, accessToken, refreshToken };
   }
@@ -90,6 +99,10 @@ export class AuthService {
     let accessToken = '';
 
     if (!data.userId) {
+      await this.loggingService.logError('auth-logs', {
+        message: '유효하지 않은 Refresh Token',
+        token: refreshToken,
+      });
       return { isValid, accessToken };
     }
 
@@ -108,11 +121,19 @@ export class AuthService {
 
     // 3. DB에 저장된 refreshToken과 전송된 refreshToken비교
     if (!tokenEntry || tokenEntry.refreshToken !== refreshToken) {
+      await this.loggingService.logError('auth-logs', {
+        message: 'RefreshToken이 일치하지 않음',
+        token: refreshToken,
+      });
       return { isValid, accessToken };
     }
 
     // 4. 새 accessToken 발급
     const newAccessToekn = this.generateToken(data.userId, data.role);
+    await this.loggingService.logInfo('auth-logs', {
+      message: '새로운 Access Token 발급 성공',
+      userId: data.userId,
+    });
     isValid = true;
     accessToken = newAccessToekn;
     return { isValid, accessToken };
@@ -129,6 +150,10 @@ export class AuthService {
     const role = data.role;
 
     if (!userId) {
+      await this.loggingService.logError('auth-logs', {
+        message: '잘못된 Access Token으로 로그아웃 시도',
+        token: accessToken,
+      });
       return { isValid, userId: '', role: '' };
     }
 
@@ -139,7 +164,9 @@ export class AuthService {
     });
 
     isValid = true;
-
+    await this.loggingService.logInfo('auth-logs', {
+      message: `로그아웃 성공: ${userId}`,
+    });
     return { isValid, userId, role };
   }
 
@@ -154,6 +181,10 @@ export class AuthService {
     const userId = data.userId;
 
     if (!userId) {
+      await this.loggingService.logError('auth-logs', {
+        message: '잘못된 Access Token으로 패스워드 수정 시도',
+        token: accessToken,
+      });
       return { isValid, status: 401 };
     }
 
@@ -161,6 +192,9 @@ export class AuthService {
     await this.userService.changePassword(userId, password);
     isValid = true;
 
+    await this.loggingService.logInfo('auth-logs', {
+      message: `패스워드 변경 성공: ${userId}`,
+    });
     return { isValid, status: 204 };
   }
 
@@ -172,8 +206,15 @@ export class AuthService {
       const user = this.jwtGuard.verifyToken(accessToken);
 
       if (!user.userId) {
+        await this.loggingService.logError('auth-logs', {
+          message: '잘못된 Access Token으로 토큰 유효성 검증 시도',
+          token: accessToken,
+        });
         return { isValid: false, userId: '', role: '' };
       } else {
+        await this.loggingService.logInfo('auth-logs', {
+          message: `토큰 유효성 검증 성공: ${user.userId}`,
+        });
         return { isValid: true, userId: user.userId, role: user.role };
       }
     } catch (error) {

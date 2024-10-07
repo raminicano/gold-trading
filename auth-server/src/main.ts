@@ -4,6 +4,8 @@ import * as dotenv from 'dotenv';
 // import { grpcServerOptions } from './config/grpc.config'; // gRPC 설정을 별도 파일에서 불러옴
 import { Transport, MicroserviceOptions } from '@nestjs/microservices';
 import { join } from 'path';
+import { GrpcExceptionFilter } from './logging/grpc-exception.filter';
+import { LoggingService } from '../src/logging/elastic-logger.service';
 
 dotenv.config();
 
@@ -27,6 +29,10 @@ async function bootstrap() {
       },
     },
   );
+  // GrpcExceptionFilter를 글로벌 필터로 사용하기 위해 NestJS의 의존성 주입을 활용
+  const loggingService = app.get(LoggingService);
+  app.useGlobalFilters(new GrpcExceptionFilter(loggingService));
+
   await app.listen();
 }
 bootstrap();

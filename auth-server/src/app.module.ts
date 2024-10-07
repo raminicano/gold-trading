@@ -10,11 +10,16 @@ import { AuthService } from 'auth/services/auth.service';
 import { JwtService } from '@nestjs/jwt';
 import { AuthGrpcController } from './auth/grpc/auth-grpc.controller';
 import { JwtAuthGuard } from 'auth/guards/jwt.guard';
+import { ElasticsearchModule } from '@nestjs/elasticsearch';
+import { LoggingService } from 'logging/elastic-logger.service';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       load: [databaseConfig],
+    }),
+    ElasticsearchModule.register({
+      node: 'http://localhost:9200',
     }),
     AuthModule,
   ],
@@ -26,6 +31,7 @@ import { JwtAuthGuard } from 'auth/guards/jwt.guard';
     AuthService,
     JwtService,
     JwtAuthGuard,
+    LoggingService,
   ],
 })
 export class AppModule {}
