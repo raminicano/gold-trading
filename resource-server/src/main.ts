@@ -9,6 +9,14 @@ import { AllExceptionsFilter } from 'logging/all-exception.filter';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  // GrpcExceptionFilter를 글로벌 필터로 사용하기 위해 NestJS의 의존성 주입을 활용
+  // const loggingService = app.get(LoggingService);
+  // HTTP 관련 예외는 HttpExceptionFilter에서 처리
+  // app.useGlobalFilters(new HttpExceptionFilter(loggingService));
+
+  // 모든 예외를 처리하는 AllExceptionsFilter
+  // app.useGlobalFilters(new AllExceptionsFilter(loggingService));
+
   const config = new DocumentBuilder()
     .setTitle('Resource Server API')
     .setDescription('자원 서버 API 문서')
@@ -35,14 +43,6 @@ async function bootstrap() {
   app.enableCors({
     allowedHeaders: 'Authorization, Content-Type',
   });
-
-  // GrpcExceptionFilter를 글로벌 필터로 사용하기 위해 NestJS의 의존성 주입을 활용
-  const loggingService = app.get(LoggingService);
-  // HTTP 관련 예외는 HttpExceptionFilter에서 처리
-  app.useGlobalFilters(new HttpExceptionFilter(loggingService));
-
-  // 모든 예외를 처리하는 AllExceptionsFilter
-  app.useGlobalFilters(new AllExceptionsFilter(loggingService));
 
   await app.listen(9999); // 요구사항 자원서버는 9999포트
 }

@@ -13,6 +13,8 @@ import { JwtAuthGuard } from 'auth/guards/jwt.guard';
 import { ElasticsearchModule } from '@nestjs/elasticsearch';
 import { LoggingService } from 'logging/elastic-logger.service';
 import { elasticConfig } from 'config/elastic.config';
+import { APP_FILTER } from '@nestjs/core';
+import { GrpcExceptionFilter } from 'logging/grpc-exception.filter';
 
 @Module({
   imports: [
@@ -33,6 +35,7 @@ import { elasticConfig } from 'config/elastic.config';
     JwtService,
     JwtAuthGuard,
     LoggingService,
+    { provide: APP_FILTER, useClass: GrpcExceptionFilter },
   ],
 })
 export class AppModule {}

@@ -1,4 +1,4 @@
-import { Catch, ExceptionFilter } from '@nestjs/common';
+import { Catch, ExceptionFilter, ArgumentsHost } from '@nestjs/common';
 import { Observable, throwError } from 'rxjs';
 import { LoggingService } from './elastic-logger.service';
 
@@ -6,7 +6,7 @@ import { LoggingService } from './elastic-logger.service';
 export class AllExceptionsFilter implements ExceptionFilter {
   constructor(private readonly loggingService: LoggingService) {}
 
-  async catch(exception: any): Promise<Observable<any>> {
+  async catch(exception: any, host: ArgumentsHost): Promise<Observable<any>> {
     // 로그 기록을 위한 메시지 생성
     const logMessage = {
       error: exception.message,

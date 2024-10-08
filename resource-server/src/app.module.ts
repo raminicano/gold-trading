@@ -16,6 +16,8 @@ import { OrderService } from 'orders/services/order.service';
 import { ElasticsearchModule } from '@nestjs/elasticsearch';
 import { elasticConfig } from 'config/elastic.config';
 import { LoggingService } from 'logging/elastic-logger.service';
+import { APP_FILTER } from '@nestjs/core';
+import { AllExceptionsFilter } from 'logging/all-exception.filter';
 
 @Module({
   imports: [
@@ -47,6 +49,7 @@ import { LoggingService } from 'logging/elastic-logger.service';
     OrderService,
     AdminGuard,
     LoggingService,
+    // { provide: APP_FILTER, useClass: AllExceptionsFilter },
   ],
 })
 export class AppModule {}

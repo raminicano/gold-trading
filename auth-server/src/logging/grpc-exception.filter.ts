@@ -7,8 +7,8 @@ export class GrpcExceptionFilter implements RpcExceptionFilter {
   constructor(private readonly loggingService: LoggingService) {}
 
   catch(exception: any, host: ArgumentsHost): Observable<any> {
-    const ctx = host.switchToRpc().getContext();
-    const data = ctx.getData();
+    const ctx = host.switchToRpc();
+    const data = ctx.getContext();
 
     // 로그 기록
     this.loggingService.logError('grpc-error-logs', {
