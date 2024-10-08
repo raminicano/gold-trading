@@ -4,12 +4,14 @@ import { AuthGrpcService } from '../../auth/grpc/auth-grpc.service';
 import { CreateUserDto } from '../dto/createUser.dto';
 import { LoginDto } from 'users/dto/loginUser.dto';
 import { ReaccessDto } from 'users/dto/reaccess.dto';
+import { LoggingService } from 'logging/elastic-logger.service';
 
 @Injectable()
 export class UserService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly authGrpcService: AuthGrpcService,
+    private readonly loggingService: LoggingService,
   ) {}
 
   // 회원가입 처리
@@ -22,6 +24,10 @@ export class UserService {
     });
 
     if (existingUser) {
+      await this.loggingService.logError(
+        'user-service-logs',
+        `회원가입 실패: ${username} 이미 존재`,
+      );
       throw new HttpException('User already exists', HttpStatus.CONFLICT); // 409
     }
 
@@ -71,6 +77,10 @@ export class UserService {
     });
 
     if (!user) {
+      await this.loggingService.logError(
+        'user-service-logs',
+        `로그인 실패: ${username} 사용자 없음`,
+      );
       throw new HttpException('User not found', HttpStatus.NOT_FOUND); // 404
     }
 
@@ -82,6 +92,10 @@ export class UserService {
 
     // 3. isValid 값으로 유효성 검증
     if (!grpcResponse.isValid) {
+      await this.loggingService.logError(
+        'user-service-logs',
+        `로그인 실패: ${username} 비밀번호 불일치`,
+      );
       throw new HttpException('Unauthorized', HttpStatus.UNAUTHORIZED); // 401
     }
 
@@ -122,12 +136,16 @@ export class UserService {
   async logout(data: string) {
     const grpcResponse = await this.authGrpcService.logoutUser(data);
     if (!grpcResponse || !grpcResponse.isValid) {
+      await this.loggingService.logError(
+        'user-service-logs',
+        `로그아웃 실패: ${data} 유효하지 않은 토큰`,
+      );
       throw new HttpException(
         'Invalid or expired access token',
         HttpStatus.UNAUTHORIZED,
       );
     }
-    return { statusCode: HttpStatus.NO_CONTENT };
+    return { userId: grpcResponse.userId };
   }
 
   // 비밀번호 재생성
