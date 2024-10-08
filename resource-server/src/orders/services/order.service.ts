@@ -9,12 +9,14 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { CreateOrderDto } from '../dto/create-order.dto';
 import { UserService } from 'users/services/user.service';
 import { UpdateOrderDto } from '../dto/update-order.dto';
+import { LoggingService } from 'logging/elastic-logger.service';
 
 @Injectable()
 export class OrderService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly userService: UserService,
+    private readonly loggingService: LoggingService,
   ) {}
 
   private generateOrderId(username: string): string {
@@ -62,6 +64,11 @@ export class OrderService {
 
     // 가격이 일치하는지 확인 (409 에러 처리)
     if (adjustedPrice !== price) {
+      await this.loggingService.logWarn('order-warn-logs', {
+        message: 'Price mismatch detected during order creation',
+        requsetedPrice: price,
+        adjustedPrice: adjustedPrice,
+      });
       throw new ConflictException({
         success: false,
         message:
@@ -85,12 +92,13 @@ export class OrderService {
 
     const orderId = this.generateOrderId((await user).username);
 
-    // 주문 타입에 따라 다른 테이블에 저장
+    // 주문 생성
+    let newOrder;
     if (type === 'buy') {
-      return await this.prisma.buyOrder.create({
+      newOrder = await this.prisma.buyOrder.create({
         data: {
           orderId,
-          userId: (await user).userId,
+          userId: user.userId,
           status: '주문 완료',
           itemId,
           quantity,
@@ -101,10 +109,10 @@ export class OrderService {
         },
       });
     } else if (type === 'sell') {
-      return await this.prisma.sellOrder.create({
+      newOrder = await this.prisma.sellOrder.create({
         data: {
           orderId,
-          userId: (await user).userId,
+          userId: user.userId,
           status: '주문 완료',
           itemId,
           quantity,
@@ -115,6 +123,15 @@ export class OrderService {
         },
       });
     }
+
+    // 주문 성공 로그 기록
+    await this.loggingService.logInfo('order-logs', {
+      message: 'Order created successfully',
+      orderId: newOrder.orderId,
+      type,
+    });
+
+    return newOrder;
   }
 
   async getOrderById(
@@ -146,6 +163,11 @@ export class OrderService {
     // 주문 조회 성공 시 유저 정보와 비교 (로그인한 사용자가 자신의 주문만 조회 가능)
     // 관리자는 조회 가능
     if (order.userId !== userId && role !== 'admin') {
+      await this.loggingService.logWarn('order-warn-logs', {
+        message: 'Unauthorized order access attempt',
+        orderId: orderId,
+        userId: userId,
+      });
       throw new ForbiddenException({
         success: false,
         message: '유효하지 않은 접근입니다.',
@@ -332,6 +354,11 @@ export class OrderService {
 
     // 사용자는 자신의 주문만 수정가능. 관리자는 모든 주문 수정 가능
     if (order.userId !== userId && userRole !== 'admin') {
+      await this.loggingService.logWarn('order-warn-logs', {
+        message: 'Unauthorized order access attempt',
+        orderId: orderId,
+        userId: userId,
+      });
       throw new ForbiddenException({
         success: false,
         message: '유효하지 않은 접근입니다.',

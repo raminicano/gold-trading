@@ -1,0 +1,49 @@
+.
+├── README.md
+├── generated
+│   └── auth.ts
+├── nest-cli.json
+├── package-lock.json
+├── package.json
+├── prisma
+│   ├── migrations
+│   │   ├── 20241006063356_add_unique_orderid
+│   │   │   └── migration.sql
+│   │   └── migration_lock.toml
+│   └── schema.prisma
+├── src
+│   ├── app.controller.spec.ts
+│   ├── app.controller.ts
+│   ├── app.module.ts
+│   ├── app.service.ts
+│   ├── auth
+│   │   ├── auth.module.ts
+│   │   ├── grpc
+│   │   │   └── auth-grpc.controller.ts
+│   │   ├── guards
+│   │   │   └── jwt.guard.ts
+│   │   └── services
+│   │       └── auth.service.ts
+│   ├── config
+│   │   ├── app.config.ts
+│   │   ├── database.config.ts
+│   │   └── elastic.config.ts
+│   ├── logging
+│   │   ├── elastic-logger.service.ts
+│   │   └── log.constants.ts
+│   ├── main.ts
+│   ├── metric
+│   │   └── metricbeat.service.ts
+│   ├── prisma
+│   │   └── prisma.service.ts
+│   └── users
+│       └── services
+│           └── user.service.ts
+├── struct.txt
+├── test
+│   ├── app.e2e-spec.ts
+│   └── jest-e2e.json
+├── tsconfig.build.json
+└── tsconfig.json
+
+30 directories, 82 files

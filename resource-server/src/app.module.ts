@@ -13,11 +13,19 @@ import { JwtGuard } from 'auth/guards/jwt.guard';
 import { AdminGuard } from 'auth/guards/admin.guard';
 import { OrderController } from 'orders/controllers/order.controller';
 import { OrderService } from 'orders/services/order.service';
+import { ElasticsearchModule } from '@nestjs/elasticsearch';
+import { elasticConfig } from 'config/elastic.config';
+import { LoggingService } from 'logging/elastic-logger.service';
+import { APP_FILTER } from '@nestjs/core';
+import { AllExceptionsFilter } from 'logging/all-exception.filter';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       load: [databaseConfig],
+    }),
+    ElasticsearchModule.register({
+      node: elasticConfig.node,
     }),
     ClientsModule.register([
       {
@@ -40,6 +48,8 @@ import { OrderService } from 'orders/services/order.service';
     JwtGuard,
     OrderService,
     AdminGuard,
+    LoggingService,
+    // { provide: APP_FILTER, useClass: AllExceptionsFilter },
   ],
 })
 export class AppModule {}

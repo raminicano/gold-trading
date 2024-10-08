@@ -5,6 +5,8 @@ import {
   Req,
   BadRequestException,
   Patch,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { UserService } from '../services/user.service';
 import { CreateUserDto } from '../dto/createUser.dto';
@@ -20,6 +22,7 @@ import { ReaccessDto } from '../dto/reaccess.dto';
 import { Request } from 'express';
 import { UpdateUserDto } from 'users/dto/updateUser.dto';
 import { JwtGuard } from 'auth/guards/jwt.guard';
+import { LoggingService } from 'logging/elastic-logger.service';
 
 @ApiTags('users')
 @Controller('users')
@@ -27,6 +30,7 @@ export class UserController {
   constructor(
     private readonly userService: UserService,
     private jwtGuard: JwtGuard,
+    private loggingService: LoggingService,
   ) {}
 
   // 회원가입 API
@@ -39,7 +43,16 @@ export class UserController {
   @ApiResponse({ status: 409, description: '이미 존재하는 사용자' })
   @Post('register')
   async register(@Body() createUserDto: CreateUserDto) {
-    return this.userService.registerUser(createUserDto);
+    await this.loggingService.logInfo(
+      'user-register-logs',
+      `회원가입 시도: ${createUserDto.username}`,
+    );
+    const response = await this.userService.registerUser(createUserDto);
+    await this.loggingService.logInfo(
+      'user-register-logs',
+      `회원가입 성공: ${createUserDto.username}`,
+    );
+    return response;
   }
 
   // 로그인 API
@@ -49,8 +62,16 @@ export class UserController {
   @ApiResponse({ status: 401, description: '비밀번호가 틀림' })
   @Post('login')
   async login(@Body() loginDto: LoginDto) {
-    console.log(loginDto);
-    return this.userService.loginUser(loginDto);
+    await this.loggingService.logInfo(
+      'user-login-logs',
+      `로그인 시도: ${loginDto.username}`,
+    );
+    const response = await this.userService.loginUser(loginDto);
+    await this.loggingService.logInfo(
+      'user-login-logs',
+      `로그인 성공: ${loginDto.username}`,
+    );
+    return response;
   }
 
   // 액세스 토큰 재발급 API
@@ -73,6 +94,7 @@ export class UserController {
   @ApiResponse({ status: 401, description: '유효하지 않은 Access Token' })
   @ApiResponse({ status: 400, description: '잘못된 요청 형식' })
   @Post('logout')
+  @HttpCode(HttpStatus.NO_CONTENT)
   async logout(@Req() request: Request) {
     // 1. Request 객체에서 Authorization 헤더 추출
     const token = this.jwtGuard.extractTokenFromHeader(request);
@@ -81,7 +103,12 @@ export class UserController {
     }
 
     // 2. userservice에서 로그아웃 로직 수행
-    return await this.userService.logout(token);
+    const response = await this.userService.logout(token);
+    await this.loggingService.logInfo(
+      'user-logout-logs',
+      `로그아웃: ${response.userId}`,
+    );
+    return response;
   }
 
   // 비밀번호 재발급 API

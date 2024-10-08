@@ -1,0 +1,66 @@
+.
+├── README.md
+├── generated
+│   └── auth.ts
+├── nest-cli.json
+├── package-lock.json
+├── package.json
+├── prisma
+│   ├── migrations
+│   │   ├── 20241006062710_add_unique_order_id
+│   │   │   └── migration.sql
+│   │   └── migration_lock.toml
+│   └── schema.prisma
+├── src
+│   ├── app.controller.spec.ts
+│   ├── app.controller.ts
+│   ├── app.module.ts
+│   ├── app.service.ts
+│   ├── auth
+│   │   ├── grpc
+│   │   │   └── auth-grpc.service.ts
+│   │   └── guards
+│   │       ├── admin.guard.ts
+│   │       └── jwt.guard.ts
+│   ├── config
+│   │   ├── app.config.ts
+│   │   ├── database.config.ts
+│   │   └── elastic.config.ts
+│   ├── database
+│   │   ├── entities
+│   │   │   └── order.entity.ts
+│   │   └── repositories
+│   │       └── order.repository.ts
+│   ├── logging
+│   │   ├── elastic-logger.service.ts
+│   │   └── log.constants.ts
+│   ├── main.ts
+│   ├── metric
+│   │   └── metricbeat.service.ts
+│   ├── orders
+│   │   ├── controllers
+│   │   │   └── order.controller.ts
+│   │   ├── dto
+│   │   │   ├── create-order.dto.ts
+│   │   │   └── update-order.dto.ts
+│   │   └── services
+│   │       └── order.service.ts
+│   ├── prisma
+│   │   └── prisma.service.ts
+│   └── users
+│       ├── controllers
+│       │   └── user.controller.ts
+│       ├── dto
+│       │   ├── createUser.dto.ts
+│       │   ├── loginUser.dto.ts
+│       │   ├── reaccess.dto.ts
+│       │   └── updateUser.dto.ts
+│       └── services
+│           └── user.service.ts
+├── struct.txt
+├── test
+│   ├── app.e2e-spec.ts
+│   └── jest-e2e.json
+├── tsconfig.build.json
+└── tsconfig.json
+

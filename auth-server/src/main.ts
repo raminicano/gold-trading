@@ -1,20 +1,16 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import * as dotenv from 'dotenv';
-// import { grpcServerOptions } from './config/grpc.config'; // gRPC 설정을 별도 파일에서 불러옴
 import { Transport, MicroserviceOptions } from '@nestjs/microservices';
 import { join } from 'path';
 
 dotenv.config();
 
 async function bootstrap() {
-  // const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule);
 
   // gRPC 서버로 설정
-  // app.connectMicroservice<MicroserviceOptions>(grpcServerOptions);
-  // await app.startAllMicroservices(); // gRPC 서버 시작
-  const app = await NestFactory.createMicroservice<MicroserviceOptions>(
-    AppModule,
+  const microservice = app.connectMicroservice<MicroserviceOptions>(
     {
       transport: Transport.GRPC,
       options: {
@@ -26,7 +22,13 @@ async function bootstrap() {
         url: 'localhost:50051',
       },
     },
+    {
+      inheritAppConfig: true, // 이 설정을 통해 글로벌 필터, 가드, 파이프 등이 상속됩니다.
+    },
   );
-  await app.listen();
+
+  await app.startAllMicroservices(); // gRPC 서버 시작
+  await app.listen(3000); // 필요시 HTTP 서버도 함께 실행
 }
+
 bootstrap();
